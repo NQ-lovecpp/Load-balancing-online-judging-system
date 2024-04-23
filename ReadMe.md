@@ -18,16 +18,16 @@
 
 # 三、项目宏观结构
 我们的项目核心是三个模块：
-1. comm : 公共模块
-2. compile_server : 编译与运行模块
-3. oj_server : 获取题目列表，查看题目编写题目界面，负载均衡，其他功能
+1. Common : 公共模块
+2. Compile_Server : 编译与运行模块
+3. OJ_Server : 获取题目列表，查看题目编写题目界面，负载均衡，其他功能
 
-
-## I. leetcode 结构
+## I. 风格：仿leetcode
 
 只实现类似leetcode 的题目列表+在线编程功能
 
-## II. 我们的项目宏观结构
+## II. 结构：Browser-Server模式
+![](/ReadMePics/BS模式.png)
 
 ## III. 编写思路
 1. 先编写compile_server
@@ -36,9 +36,11 @@
 4. 前端的页面设计
 5. version2 基于MySQL 版的在线OJ
 
+<br>
+<br>
+<br>
 
-
-# 关于git分支管理
+# 四、关于Git分支管理
 
 设计了一个 git 分支管理结构和分支命名风格的建议。这套结构以明确的分支策略、基于不同阶段的版本管理和团队协作的流程为基础。 
 
@@ -143,4 +145,7 @@ Updated instructions for setting up the development environment.
 ### 使用工具验证提交信息
 有些开发团队使用 Git 钩子或自动化工具来强制执行提交信息规范。在这种情况下，你可能需要遵循更严格的标准。
 
-这些是 Git 提交信息的规范和最佳实践，希望对你有所帮助。如果你有其他关于 Git 的问题，或者想了解更多关于提交信息的规范，请告诉我。
+
+# 4. Compiler_Server - 编译服务设计
+提供的服务：编译并运行代码，得到格式化的相关的结果：
+![编译服务](/ReadMePics/编译服务.png)
