@@ -1,0 +1,8 @@
+./temp/code.cpp: In function ‘int main()’:
+./temp/code.cpp:7:5: error: ‘sadf’ was not declared in this scope
+     sadf
+     ^~~~
+./temp/code.cpp:7:5: note: suggested alternative: ‘scanf’
+     sadf
+     ^~~~
+     scanf

@@ -83,5 +83,20 @@ namespace ns_utility
             return false;
         }
     };
+
+    class TimeUtility
+    {
+    private:
+
+    public:
+        static std::string GetTimeStamp()
+        {
+            time_t currtime = time(nullptr);
+            struct tm *curr = localtime(&currtime);
+            char time_buffer[128];
+            snprintf(time_buffer, sizeof(time_buffer), "%d-%d-%d %d:%d:%d", curr->tm_year + 1900, curr->tm_mon + 1, curr->tm_mday, curr->tm_hour, curr->tm_min, curr->tm_sec);
+            return time_buffer;
+        }
+    };
     
 }
