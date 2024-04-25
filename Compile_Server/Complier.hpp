@@ -53,15 +53,16 @@ namespace ns_compiler
             if(pid < 0)
             {
                 // 创建子进程失败
-                LOG(Error) << "Fork错误，创建子进程失败" << "\n";
+                LOG(Error) << "fork错误，创建子进程失败" << "\n";
                 return false;
             }
             else if(pid == 0)
             {
                 // 子进程：调用编译器，完成对代码的编译
 
-                // 没有就创建、只写
-                int _stderr = open(PathUtility::Stderr(file_name).c_str(), O_CREAT | O_WRONLY, 0644);
+                // 没有就创建 只写
+                umask(0);
+                int _stderr = open(PathUtility::CompilerError(file_name).c_str(), O_CREAT | O_WRONLY, 0644);
                 if(_stderr < 0)
                 {
                     LOG(Warning) << "没有形成stderr文件" << "\n";

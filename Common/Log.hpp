@@ -16,7 +16,7 @@ namespace ns_log
 {
     using namespace ns_utility;
 
-    /// @brief 日志等级
+    // 日志等级
     enum LogLevel
     {
         Debug = 0,
