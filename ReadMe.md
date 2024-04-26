@@ -233,3 +233,85 @@ struct rlimit {
 
 
 ## 编译并运行 (Compile_And_Run.hpp)
+
+temp:
+命名空间： ns_compiler,  类：class Compiler
+命名空间： ns_runner  类：class Runner
+命名空间： ns_log
+命名空间： ns_utility,  类：class PathUtility FileUtility TimeUtility
+
+>[!Tip] 我们项目目前的结构：
+>![](./ReadMePics/文件结构简图.png)
+
+我们可以对“CompileAndRun”进行测试，给run函数传递一个json串，包括试运行的代码，然后看看返回的json串是否符合预期。
+预期：
+1. 能否返回各种错误信息
+2. 能够在temp目录下，生成带有编译错误、标准输出、标准错误的文件，且文件名唯一。
+
+```cpp
+#include "Compile_And_Run.hpp"
+using namespace ns_compile_and_run;
+
+int main()
+{
+    // 通过http 让client 给我们上传一个json数据
+
+    std::string in_json_str;  // 输入的json串
+    std::string out_json_str;
+    Json::Value in_json_value;
+    in_json_value["code"] = R"(
+        #include <iostream>
+        using namespace std;
+        int main()
+        {
+            while(true);
+            cout << "hello world!!!" << endl; 
+            return 0;
+        }
+    )";
+    in_json_value["input"] = "";
+    in_json_value["cpu_limit"] = 1;
+    in_json_value["mem_limit"] = 10240 * 30;
+
+    Json::FastWriter writer;
+    in_json_str = writer.write(in_json_value);
+    
+    CompileAndRun::Start(in_json_str, &out_json_str);
+
+    std::cout << out_json_str << std::endl;
+    return 0;
+}
+```
+
+测试运行结果：
+1. 编译错误：![](ReadMePics/编译错误.png)
+2. 运行错误 - 内存超出限制：![](ReadMePics/运行出错_内存.png)
+3. 运行错误 - 时间超出限制：![](ReadMePics/运行错误_超时.png)
+
+
+点击[这里](#section1)跳转如何安装jsoncpp，点击[这里](#section2)跳转到标题二。
+
+
+
+
+
+
+
+# 所有备注
+
+## 安装jsoncpp
+
+<a id="section1"></a>
+
+```bash
+[chen@ali-centos-7 Load-balancing-online-judging-system]$ sudo yum install -y jsoncpp-devel
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * centos-sclo-rh: mirrors.163.com
+ * centos-sclo-sclo: mirrors.nju.edu.cn
+Package jsoncpp-devel-0.10.5-2.el7.x86_64 already installed and latest version
+Nothing to do
+[chen@ali-centos-7 Load-balancing-online-judging-system]$ 
+```
+
+<a id="section2"></a>
