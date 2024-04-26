@@ -8,6 +8,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/wait.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 
 #include "../Common/Log.hpp"
@@ -27,13 +29,34 @@ namespace ns_runner
         Runner() {}
         ~Runner() {}
 
+
+        /// @brief 设置执行用户代码的子进程占用空间和cpu时间的方法
+        /// @param _cpu 秒
+        /// @param _momory KB
+        static void SetProcLimit(int _cpu, int _memory)
+        {
+            // 限制累计运行时长
+            struct rlimit time_rlimit;
+            time_rlimit.rlim_cur = _cpu;
+            time_rlimit.rlim_max = RLIM_INFINITY; 
+            setrlimit(RLIMIT_CPU, &time_rlimit);
+
+            // 限制内存
+            struct rlimit mem_rlimit;
+            mem_rlimit.rlim_cur = _memory * 1024; // 转化为KB
+            mem_rlimit.rlim_max = RLIM_INFINITY;
+            setrlimit(RLIMIT_AS, &mem_rlimit);
+        }
+
         /**
          * 返回值 > 0：程序异常，退出时收到了信号，返回值就是对应的信号编号
          * 返回值 = 0：程序正常运行完毕，结果在临时文件中
          * 返回值 < 0：内部错误
          * 
+         * cpu_limit: 运行时cpu时间限制
+         * mem_limit: 运行时内存限制
         */
-        static int Run(const std::string &file_name)
+        static int Run(const std::string &file_name, int cpu_limit, int mem_limit)
         {
             /*********************************************
              * 程序运行：
@@ -84,6 +107,8 @@ namespace ns_runner
                 dup2(_stdin_fd, stdin->_fileno);
                 dup2(_stdout_fd, stdout->_fileno);
                 dup2(_stderr_fd, stderr->_fileno);
+
+                SetProcLimit(cpu_limit, mem_limit);
 
                 // 执行程序
                 execl(_execute.c_str()/*我要执行谁*/, _execute.c_str()/*命令行参数*/, nullptr);
