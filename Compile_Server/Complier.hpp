@@ -60,7 +60,7 @@ namespace ns_compiler
             {
                 // 子进程：调用编译器，完成对代码的编译
 
-                // 没有就创建 只写
+                // 没有就创建+只写
                 umask(0);
                 int _stderr = open(PathUtility::CompilerError(file_name).c_str(), O_CREAT | O_WRONLY, 0644);
                 if(_stderr < 0)

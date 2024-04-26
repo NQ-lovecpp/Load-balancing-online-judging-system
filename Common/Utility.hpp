@@ -2,7 +2,10 @@
 
 #include <iostream>
 #include <string>
+#include <atomic>
+#include <fstream>
 
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -82,6 +85,29 @@ namespace ns_utility
         }
     };
 
+    class TimeUtility
+    {
+    private:
+
+    public:
+        static std::string GetTimeStamp()
+        {
+            time_t currtime = time(nullptr);
+            struct tm *curr = localtime(&currtime);
+            char time_buffer[128];
+            snprintf(time_buffer, sizeof(time_buffer), "%d-%d-%d %d:%d:%d", curr->tm_year + 1900, curr->tm_mon + 1, curr->tm_mday, curr->tm_hour, curr->tm_min, curr->tm_sec);
+            return time_buffer;
+        }
+
+        // 获取毫秒级时间戳
+        static std::string GetTimeMs()
+        {
+            struct timeval _time;
+            gettimeofday(&_time, nullptr);
+            return std::to_string(_time.tv_sec * 1000 + _time.tv_usec / 1000);
+        }
+    };
+
     class FileUtility
     {
     private:
@@ -104,21 +130,52 @@ namespace ns_utility
             }
             return false;
         }
-    };
 
-    class TimeUtility
-    {
-    private:
-
-    public:
-        static std::string GetTimeStamp()
+        static std::string GetUniqueFileName()
         {
-            time_t currtime = time(nullptr);
-            struct tm *curr = localtime(&currtime);
-            char time_buffer[128];
-            snprintf(time_buffer, sizeof(time_buffer), "%d-%d-%d %d:%d:%d", curr->tm_year + 1900, curr->tm_mon + 1, curr->tm_mday, curr->tm_hour, curr->tm_min, curr->tm_sec);
-            return time_buffer;
+            static std::atomic_uint id(0);
+            id++;
+            std::string ms = TimeUtility::GetTimeMs();
+
+            // 通过毫秒级时间戳+原子性递增的唯一值
+            std::string uniq_id = std::to_string(id);
+            return ms + "_" + uniq_id;
+        }
+
+        static bool WriteFile(const std::string &target_path, const std::string &content)
+        {
+            std::ofstream out(target_path, std::ios::binary);
+            if(!out.is_open())
+            {
+                return false;
+            }
+
+            out.write(content.c_str(), content.size());
+            out.close();
+            return true;
+        }
+        
+        /// @brief 从指定文件读取文件
+        /// @param target_path 文件路径
+        /// @param content 文件内容（输出型参数）
+        /// @param keep 是否保留文件中的'\n'
+        /// @return 
+        static bool ReadFile(const std::string &target_path, std::string *content, bool keep = false)
+        {
+            std::ifstream in(target_path);
+            if(!in.is_open())
+            {
+                return false;
+            }
+
+            std::string line;
+            while(std::getline(in, line))
+            {
+                (*content) += line;
+                (*content) += (keep ? "\n" : "");
+            }
+
+            return true;
         }
     };
-    
 }

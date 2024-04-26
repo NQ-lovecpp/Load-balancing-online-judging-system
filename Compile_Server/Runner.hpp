@@ -19,7 +19,6 @@ namespace ns_runner
 {
     using namespace ns_log;
     using namespace ns_utility;
-    using namespace ns_runner;
 
     class Runner
     {
