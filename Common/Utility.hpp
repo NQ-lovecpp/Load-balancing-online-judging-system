@@ -10,6 +10,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <boost/algorithm/string.hpp>
+
 namespace ns_utility
 {
     const std::string temp_path = "./temp/";
@@ -178,4 +180,26 @@ namespace ns_utility
             return true;
         }
     };
+
+    class StringUtility
+    {
+    public:
+
+        /**
+         * @brief 切分字符串
+         * @param str 输入的字符串
+         * @param target 分割后的数组（输出型参数）
+         * @param sep 期望的分隔符
+        */
+        static void SplitString(const std::string &str, const std::vector<std::string> *target, const std::string &sep)
+        {
+            // 使用boost库中的split库
+            boost::split((*target), str, boost::is_any_of(" "), boost::algorithm::token_compress_on);
+        }
+
+        StringUtility() {}
+        ~StringUtility() {}
+
+    };
+
 }
