@@ -64,7 +64,10 @@ namespace ns_controller
 
         void Judge(const std::string in_json, std::string *out_json)
         {
-            
+            // 1. in_json进行反序列化，得到题目的id，得到用户提交源代码
+            // 2. 重新拼接用户代码，将测试用例代码，写成一份新的代码
+            // 3. 选择负载最低的主机，发起http请求，得到结果
+            // 4. 将结果赋值给out_json
         }
 
         Controller() {}
