@@ -375,15 +375,64 @@ int main(int argc, char* argv[])
 
 
 
+# 六、基于MVC结构的Online Judge服务器设计
+本质：建立一个小型网站
+网站功能：
+1. 获取首页，用题目列表充当
+2. 编辑区域页面
+3. 提交判题功能（编译并运行）
+
+>什么是MVC结构？
+>- M: Model，通常是和数据交互的模块，比如，对题库进行增删查改（文件版，MySQL版）
+>- V：View，通常是拿到数据之后，要进行构建网页，渲染网页内容，展示给用户（通过浏览器）
+>- C：Controller，控制器。控制器是MVC结构中的协调者，它负责接收用户的输入并处理用户的请求。
+
+```mermaid
+flowchart LR
+    User[用户] -->|请求操作| View[View]
+    View -->|发送用户请求| Controller["Controller"]
+    Controller -->|处理请求| Model[Model]
+    Model -->|返回数据| Controller
+    Controller -->|更新视图| View
+
+```
+
+# 文件版题目设计
+
+需求：
+1. 题目编号
+2. 题目标题
+3. 题目难度
+4. 题目描述（题面）
+5. 题目的时间限制
+6. 题目的内存限制
+7. 通过率
+
+需要的文件：
+1. question.list：题目列表（不需要题目内容）
+2. 题目描述，题目的预设置代码`default_template_code.cpp`，测试用例代码`test_cases.cpp`
+   - 两者用题目编号关联
+
+
+思路：
+1. 用户提交代码
+2. OJ不是只把用户代码交给compile_and_run，而是要融合用户基于`default_template_code.cpp`的更改和`test_cases.cpp`
 
 
 
+
+
+
+
+
 <br>
 <br>
 <br>
 <br>
 <br>
 <br>
+
+
 
 # Final. 所有备注
 
@@ -431,3 +480,27 @@ int main()
 }
 // 更多的细节可以看gitee上面的使用手册
 ```
+
+## 安装boost库
+```bash
+$ sudo yum install -y boost-devel //是boost 开发库
+```
+
+## 安装与测试ctemplate
+ctemplate是谷歌的一个开源项目
+```
+$ git clone https://github.com/OlafvdSpek/ctemplate.git
+$ ./autogen.sh
+$ ./configure
+$ make //编译
+$ make install //安装到系统中
+```
+
+>注意:
+>1. 使用高版本gcc编译
+>2. 如果安装报错，使用sudo
+><br>
+
+### 测试
+![Alt text](./ReadMePics/ctemplate的kv替换.png)
+
