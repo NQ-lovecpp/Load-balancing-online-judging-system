@@ -3,7 +3,7 @@
 <head>  
     <meta charset="UTF-8">  
     <meta name="viewport" content="width=device-width, initial-scale=1.0">  
-    <title>我的主页</title>  
+    <title>{{number}}.{{title}}</title>  
     <style>  
         body {  
             font-family: Arial, sans-serif;  
@@ -13,7 +13,7 @@
         }  
   
         header {  
-            background-color: #585858;  
+            background-color: #333;  
             color: #fff;  
             padding: 20px;  
             text-align: center;  
@@ -51,11 +51,14 @@
     </header>  
   
     <main>  
-        <a href="/all_questions">点击我开始编程！</a>
+        <h4>{{number}}.{{title}}.{{star}}.{{description}}</h4>
+        <p>{{description}}</p>
+        <br>
+        <textarea name="code" cols="90">{{pre_code}}</textarea>
     </main>  
   
     <footer>  
-        <p>版权所有 &copy; 2023</p>  
+        <p>版权所有 &copy; 2024</p>  
     </footer>  
 </body>  
 </html>

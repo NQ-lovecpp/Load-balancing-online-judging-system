@@ -10,7 +10,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "Utility.hpp"
+#include "../Common/Utility.hpp" 
 
 namespace ns_log
 {

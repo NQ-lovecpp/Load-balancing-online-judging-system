@@ -17,6 +17,7 @@ namespace ns_model
 {
     using namespace std;
     using namespace ns_log;
+    using namespace ns_utility;
     
     struct Question
     {
@@ -39,6 +40,14 @@ namespace ns_model
         std::unordered_map<string, Question> question_hash;  // 题号映射到题目细节
     public:
 
+        Model()
+        {
+            assert(LoadQuestionList(questions_list_path));
+        }
+
+        ~Model() {}
+
+        // 加载题目列表 - 其实是一种初始化
         bool LoadQuestionList(const std::string &q_list_path)
         {
             // 加载配置文件："./Questions/questions.list"
@@ -84,6 +93,9 @@ namespace ns_model
             in.close();
         }
 
+        /// @brief 将文件中的题目加载到Question对象数组中 - 本质是从后台取出所有题目信息，便于构建题目列表网页
+        /// @param out Question对象数组
+        /// @return 是否成功
         bool GetAllQuestions(vector<Question> *out)
         {
             if(question_hash.size() == 0)
@@ -98,6 +110,9 @@ namespace ns_model
             return true;
         }
 
+        /// @brief 将文件中的题目加载到Question对象数组中 - 本质是从后台取出单个题目信息，便于构建单个题目网页
+        /// @param out Question对象数组
+        /// @return 是否成功
         bool GetOneQuestion(const std::string &number, Question *q)
         {
             const auto& iter = question_hash.find(number);
@@ -109,12 +124,5 @@ namespace ns_model
             (*q) = iter->second;
             return true;
         }
-
-        Model()
-        {
-            assert(LoadQuestionList(questions_list_path));
-        }
-        ~Model();
     };
-    
 }
