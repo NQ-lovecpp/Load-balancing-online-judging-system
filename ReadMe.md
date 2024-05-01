@@ -146,17 +146,17 @@ Updated instructions for setting up the development environment.
 有些开发团队使用 Git 钩子或自动化工具来强制执行提交信息规范。在这种情况下，你可能需要遵循更严格的标准。
 
 
-# 4. Compiler_Server - 编译服务设计
+# 五、Compiler_Server - 编译服务设计
 提供的服务：编译并运行代码，得到格式化的相关的结果：
 ![编译服务](/ReadMePics/编译服务.png)
 
-## 编译功能 (Compiler.hpp)
+## 5.1 编译功能 (Compiler.hpp)
 
-## 日志功能 (Log.hpp)
+## 5.2 日志功能 (Log.hpp)
 
-## 运行功能 (Runner.hpp)
+## 5.3 运行功能 (Runner.hpp)
 
-## 测试资源限制功能
+## 5.4 测试资源限制功能
 
 ```cpp
 #include <sys/time.h>
@@ -232,7 +232,7 @@ struct rlimit {
 
 
 
-## 编译并运行 (Compile_And_Run.hpp)
+## 5.5 编译并运行 (Compile_And_Run.hpp)
 
 temp:
 命名空间： ns_compiler,  类：class Compiler
@@ -243,7 +243,10 @@ temp:
 >[!Tip] 我们项目目前的结构：
 >![](./ReadMePics/文件结构简图.png)
 
-我们可以对“CompileAndRun”进行测试，给run函数传递一个json串，包括试运行的代码，然后看看返回的json串是否符合预期。
+
+### 本地测试
+我们可以对“CompileAndRun”进行本地测试，给run函数传递一个json串，包括试运行的代码，然后看看返回的json串是否符合预期。
+
 预期：
 1. 能否返回各种错误信息
 2. 能够在temp目录下，生成带有编译错误、标准输出、标准错误的文件，且文件名唯一。
@@ -283,13 +286,137 @@ int main()
 }
 ```
 
-测试运行结果：
+本地测试运行结果：
 1. 编译错误：![](ReadMePics/编译错误.png)
 2. 运行错误 - 内存超出限制：![](ReadMePics/运行出错_内存.png)
 3. 运行错误 - 时间超出限制：![](ReadMePics/运行错误_超时.png)
 
 
-点击[这里](#section1)跳转如何安装jsoncpp，点击[这里](#section2)跳转到标题二。
+点击[这里](#section1)跳转如何安装jsoncpp
+
+
+
+
+### 包装成网络服务，进行网络测试
+
+1. 让我们的项目接入cpp-httplib开源第三方库，它是一个***阻塞式多线程的一个网络http库***
+2. cpp-httplib是**header-only**的，所以只需要将`.h`拷贝到项目中，即可直接使用，点击[这里](#section2)跳转到如何安装cpp-httplib。
+
+3. 编写Compile_Server.cc，引入httplib头文件：
+```cpp
+#include "Compile_And_Run.hpp"
+#include "../Common/httplib.h"
+
+using namespace ns_compile_and_run;
+using namespace httplib;
+
+void Usage(const char* proc)
+{
+    std::cerr << "Usage: " << "\n\t" << proc << " server_port" << std::endl;
+}
+
+int main(int argc, char* argv[])
+{
+    if(argc != 2)
+    {
+        Usage(argv[0]);
+        return 1;
+    }
+
+
+    // using Handler = std::function<void(const Request &, Response &)>;
+    Server svr;
+
+    svr.Get("/hello", [](const Request &req, Response &resp){
+        // 用来进行基本测试
+        resp.set_content("hello httplib, 你好httplib!", "text/plain;charset=utf-8");
+    });
+
+    svr.Post("/compile_and_run", [](const Request &req, Response &resp){
+        // 用户请求的服务正文是一个json串
+        std::string in_json_str = req.body;
+        std::string out_json_str;
+        if(!in_json_str.empty())
+        {
+            CompileAndRun::Start(in_json_str, &out_json_str);
+            resp.set_content(out_json_str, "application/json;charset=utf-8");
+        }
+    });
+
+    svr.set_base_dir("./wwwroot");
+    svr.listen("0.0.0.0", atoi(argv[1]));
+
+    return 0;
+}
+```
+
+>说明一下：
+1. **svr.Get("/hello", lambda表达式)**
+
+   这个调用设置了当服务器接收到一个 GET 请求到 "/hello" 路径时应该执行的回调函数。这里的回调函数非常简单，它只是设置响应的内容为 "hello httplib, 你好httplib!"，并设置内容类型为 "text/plain;charset=utf-8"。
+
+2. **svr.Post("/compile_and_run", lambda表达式)**
+
+   这个调用设置了当服务器接收到一个 POST 请求到 "/compile_and_run" 路径时应该执行的回调函数。这个回调函数会获取请求的主体（body）内容，它应该是一个 JSON 字符串。然后，它调用 `CompileAndRun::Start` 函数让服务器对post过来的JSON串中的代码编译处理后，将运行结果作为 JSON串返回给客户端。响应的内容类型被设置为 "application/json;charset=utf-8"。
+   我们使用PostMan进行测试，可以通过[PostMan官网](https://web.postman.com/)下载安装。
+   
+   - POST一个json串可以返回它对应的json串：
+   ![](./ReadMePics/postman_test.png)
+
+   - 可以在终端中看到服务器打出的日志信息，服务器响应了我们的请求：![](/ReadMePics/serverecho_post.png)
+
+3. **svr.set_base_dir("./wwwroot")**
+
+   这个调用设置了服务器的基础目录为 "./wwwroot"。这意味着，当客户端请求一个静态文件（例如一个图片或 CSS 文件）时，服务器会在这个目录下查找这个文件：![](/ReadMePics/testwwwroot.png)
+
+4. **svr.listen("0.0.0.0", atoi(argv[1]))**
+
+   这个调用启动服务器并使其监听传入的连接。`"0.0.0.0"` 表示服务器应该监听所有可用的网络接口。`atoi(argv[1])` 将命令行参数 `argv[1]` 转换为整数，这个整数表示服务器应该监听的端口号。
+
+
+
+# 六、基于MVC结构的Online Judge服务器设计
+本质：建立一个小型网站
+网站功能：
+1. 获取首页，用题目列表充当
+2. 编辑区域页面
+3. 提交判题功能（编译并运行）
+
+>什么是MVC结构？
+>- M: Model，通常是和数据交互的模块，比如，对题库进行增删查改（文件版，MySQL版）
+>- V：View，通常是拿到数据之后，要进行构建网页，渲染网页内容，展示给用户（通过浏览器）
+>- C：Controller，控制器。控制器是MVC结构中的协调者，它负责接收用户的输入并处理用户的请求。
+
+```mermaid
+flowchart LR
+    User[用户] -->|请求操作| View[View]
+    View -->|发送用户请求| Controller["Controller"]
+    Controller -->|处理请求| Model[Model]
+    Model -->|返回数据| Controller
+    Controller -->|更新视图| View
+
+```
+
+# 文件版题目设计
+
+需求：
+1. 题目编号
+2. 题目标题
+3. 题目难度
+4. 题目描述（题面）
+5. 题目的时间限制
+6. 题目的内存限制
+7. 通过率
+
+需要的文件：
+1. question.list：题目列表（不需要题目内容）
+2. 题目描述，题目的预设置代码`default_template_code.cpp`，测试用例代码`test_cases.cpp`
+   - 两者用题目编号关联
+
+
+思路：
+1. 用户提交代码
+2. OJ不是只把用户代码交给compile_and_run，而是要融合用户基于`default_template_code.cpp`的更改和`test_cases.cpp`
 
 
 
@@ -297,7 +424,17 @@ int main()
 
 
 
-# 所有备注
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+
+
+# Final. 所有备注
 
 ## 安装jsoncpp
 
@@ -314,4 +451,56 @@ Nothing to do
 [chen@ali-centos-7 Load-balancing-online-judging-system]$ 
 ```
 
+
+## 安装cpp-httplib：header-only
 <a id="section2"></a>
+
+cpp-httplib gitee链接：https://gitee.com/yuanfeng1897/cpp-httplib?_from=gitee_search
+
+v0.7.15版本链接： https://gitee.com/yuanfeng1897/cpp-httplib/tree/v0.7.15
+
+说明：
+1. 接入cpp-httplib，只需要将.h拷贝到你的项目中，即可直接使用
+2. 最新的cpp-httplib在使用的时候，如果gcc不是特别新的话有可能会有运行时错误的问题
+   - 建议：cpp-httplib 0.7.15
+   - 下载zip安装包，上传到服务器即可
+
+
+```cpp
+// 使用样例:
+#include "httplib.h"
+int main()
+{
+   httplib::Server svr;
+   svr.Get("/hi", [](const httplib::Request &req, httplib::Response &rsp){
+   rsp.set_content("你好,世界!", "text/plain; charset=utf-8");
+   });
+   svr.listen("0.0.0.0", 8080);
+   return 0;
+}
+// 更多的细节可以看gitee上面的使用手册
+```
+
+## 安装boost库
+```bash
+$ sudo yum install -y boost-devel //是boost 开发库
+```
+
+## 安装与测试ctemplate
+ctemplate是谷歌的一个开源项目
+```
+$ git clone https://github.com/OlafvdSpek/ctemplate.git
+$ ./autogen.sh
+$ ./configure
+$ make //编译
+$ make install //安装到系统中
+```
+
+>注意:
+>1. 使用高版本gcc编译
+>2. 如果安装报错，使用sudo
+><br>
+
+### 测试
+![Alt text](./ReadMePics/ctemplate的kv替换.png)
+

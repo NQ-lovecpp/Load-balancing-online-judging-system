@@ -74,7 +74,7 @@ namespace ns_compiler
                 // 重定向不会影响进程打开的文件（不影响文件描述符表）
                 // g++ target -o target src -std=c++11
                 execlp("g++", "g++", "-o", PathUtility::Exe(file_name).c_str(), \
-                 PathUtility::Src(file_name).c_str(), "-std=c++11", nullptr); // 这里的nullptr表示结尾
+                 PathUtility::Src(file_name).c_str(), "-std=c++11", "-D", "COMPILER_ONLINE", nullptr); // 这里的nullptr表示结尾
 
                 LOG(Error) << "g++未启动，可能是参数错误" << "\n";;
                 exit(1); // 程序替换错误直接终止子进程

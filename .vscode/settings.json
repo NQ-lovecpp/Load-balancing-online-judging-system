@@ -32,6 +32,27 @@
         "stdexcept": "cpp",
         "tuple": "cpp",
         "utility": "cpp",
-        "atomic": "cpp"
+        "atomic": "cpp",
+        "bitset": "cpp",
+        "chrono": "cpp",
+        "cmath": "cpp",
+        "condition_variable": "cpp",
+        "csignal": "cpp",
+        "cstring": "cpp",
+        "list": "cpp",
+        "iomanip": "cpp",
+        "mutex": "cpp",
+        "numeric": "cpp",
+        "ratio": "cpp",
+        "system_error": "cpp",
+        "thread": "cpp",
+        "cinttypes": "cpp",
+        "regex": "cpp",
+        "cstddef": "cpp",
+        "strstream": "cpp",
+        "complex": "cpp",
+        "unordered_set": "cpp",
+        "cfenv": "cpp",
+        "typeindex": "cpp"
     }
 }

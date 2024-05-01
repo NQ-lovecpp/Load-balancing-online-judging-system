@@ -1,0 +1,64 @@
+<!DOCTYPE html>  
+<html lang="zh">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title>{{number}}.{{title}}</title>  
+    <style>  
+        body {  
+            font-family: Arial, sans-serif;  
+            background-color: #f2f2f2;  
+            margin: 0;  
+            padding: 0;  
+        }  
+  
+        header {  
+            background-color: #333;  
+            color: #fff;  
+            padding: 20px;  
+            text-align: center;  
+        }  
+  
+        main {  
+            margin: 20px;  
+            padding: 20px;  
+            background-color: #fff;  
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  
+        }  
+  
+        footer {  
+            background-color: #333;  
+            color: #fff;  
+            text-align: center;  
+            padding: 10px;  
+            position: fixed;  
+            bottom: 0;  
+            width: 100%;  
+        }  
+  
+        h1 {  
+            color: #333;  
+        }  
+  
+        p {  
+            line-height: 1.6;  
+        }  
+    </style>  
+</head>  
+<body>  
+    <header>  
+        <h1>My_OJ</h1>  
+    </header>  
+  
+    <main>  
+        <h4>{{number}}.{{title}}.{{star}}</h4>
+        <p>{{description}}</p>
+        <br>
+        <textarea name="code" cols="90">{{pre_code}}</textarea>
+    </main>  
+  
+    <footer>  
+        <p>版权所有 &copy; 2024</p>  
+    </footer>  
+</body>  
+</html>
