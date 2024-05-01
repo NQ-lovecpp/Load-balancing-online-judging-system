@@ -49,16 +49,18 @@ int main()
     // 1. 每道题的测试用例
     // 2. compile_and_run
 
-    svr.Get(R"(/judge/(\d+))", [](const Request &request, Response & response)
+    svr.Post(R"(/judge/(\d+))", [&ctrl](const Request &request, Response & response)
     {
         std::string number = request.matches[1];
-        response.set_content("指定题目的判题：" + number, "text/plain; charset=utf-8");
+        std::string result_json_str;
+        ctrl.Judge(number, request.body, &result_json_str);
+        response.set_content(result_json_str, "application/json; charset=utf-8");
+
+        // response.set_content("指定题目的判题：" + number, "text/plain; charset=utf-8");
     });
 
+
     svr.set_base_dir("./wwwroot");
-
-
-
     svr.listen("0.0.0.0", 8888);
     return 0;
 } 

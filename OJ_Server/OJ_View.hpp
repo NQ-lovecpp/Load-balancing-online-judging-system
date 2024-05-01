@@ -69,7 +69,6 @@ namespace ns_view
             root.SetValue("title",q.title);
             root.SetValue("star",q.star);
             root.SetValue("description",q.description);
-            cerr << q.description << endl;
             root.SetValue("pre_code",q.default_code);
 
             // 3. 获取被渲染的html

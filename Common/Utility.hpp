@@ -4,6 +4,7 @@
 #include <string>
 #include <atomic>
 #include <fstream>
+#include <vector>
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -161,14 +162,14 @@ namespace ns_utility
         /// @brief 从指定文件读取文件
         /// @param target_path 文件路径
         /// @param content 文件内容（输出型参数）
-        /// @param keep 是否保留文件中的'\n'
+        /// @param keep 是否保留文件中的"\n"
         /// @return 
         static bool ReadFile(const std::string &target_path, std::string *content, bool keep = false)
         {
             std::ifstream in(target_path);
             if(!in.is_open())
             {
-                std::cerr << "打开: " << target_path << "文件失败!";
+                std::cerr << "打开: " << target_path << "文件失败!" << std::endl;
                 return false;
             }
 
@@ -196,7 +197,7 @@ namespace ns_utility
         static void SplitString(const std::string &str, std::vector<std::string> *target, const std::string &sep)
         {
             // 使用boost库中的split库
-            boost::split((*target), str, boost::is_any_of(" "), boost::algorithm::token_compress_on);
+            boost::split((*target), str, boost::is_any_of(sep), boost::algorithm::token_compress_on);
         }
 
         StringUtility() {}

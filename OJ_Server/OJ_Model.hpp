@@ -79,18 +79,18 @@ namespace ns_model
                 std::string current_path = question_folder_path;
                 current_path += _q.number;
                 current_path += "/";
-
-                FileUtility::ReadFile(current_path + "description.cpp", &(_q.description), true);
+                 
+                FileUtility::ReadFile(current_path + "description.txt", &(_q.description), true);
                 FileUtility::ReadFile(current_path + "default_template_code.cpp", &(_q.default_code), true);
                 FileUtility::ReadFile(current_path + "test_cases.cpp", &(_q.test_cases), true);
 
                 question_hash[_q.number] = _q;
-
             }
 
             LOG(Info) << "题库加载成功!" << "\n";
 
             in.close();
+            return true;
         }
 
         /// @brief 将文件中的题目加载到Question对象数组中 - 本质是从后台取出所有题目信息，便于构建题目列表网页
