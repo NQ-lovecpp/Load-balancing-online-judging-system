@@ -6,10 +6,13 @@
 #include <mutex>
 #include <vector>
 #include <algorithm>
+#include <cstdlib>
 
 #include "../Common/Utility.hpp"
 #include "../Common/httplib.h"
 #include "../Common/Log.hpp"
+
+#define MySQL 1;
 #include "OJ_Model.hpp"
 #include "OJ_View.hpp"
 
@@ -28,9 +31,9 @@ namespace ns_controller
     class Machine
     {
     public:
-        std::string ip; // 编译服务的ip
-        int port;       // 编译服务的端口号
-        uint64_t load;  // 负载
+        std::string ip;  // 编译服务的ip
+        int port;        // 编译服务的端口号
+        uint64_t load;   // 负载
         std::mutex *mtx; // mutex是禁止拷贝的，必须使用指针
 
     public:
@@ -154,15 +157,22 @@ namespace ns_controller
                 return false;
             }
 
+            // // 1. 随机数法
+            // int rand_id = rand() % online.size();
+            // *id = online[rand_id];
+            // *m = &machines[online[rand_id]];
+
+
+            // 2. 轮询法
             // 遍历找到负载最小的机器
             *id = online[0];
             *m = &machines[online[0]];
 
-            uint64_t min_load = machines[online[0]].load;
+            uint64_t min_load = machines[online[0]].GetLoad();
             for(int i = 0; i < online_num; i++)
             {
                 uint64_t curr_load = machines[online[i]].GetLoad();
-                if(min_load < curr_load)
+                if(min_load <= curr_load)
                 {
                     min_load = curr_load;
                     *id = online[i];

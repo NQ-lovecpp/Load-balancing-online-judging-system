@@ -3,6 +3,8 @@
 #include "OJ_Controller.hpp"
 #include "Daemon.hpp"
 #include <unistd.h>
+#include <ctime>
+#include <cstdlib>
 
 using namespace httplib;
 using namespace ns_controller;
@@ -22,6 +24,8 @@ int main()
     signal(SIGQUIT, Recovery); // ctrl + "\"
 
     cout << "pid: " << getpid() << endl;
+
+    srand(time(nullptr));
 
 #ifdef DEAMON_ON
     // 守护进程化
