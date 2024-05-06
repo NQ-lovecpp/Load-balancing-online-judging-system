@@ -397,7 +397,7 @@ flowchart LR
 
 ```
 
-# 文件版题目设计
+## 文件版题目设计
 
 需求：
 1. 题目编号
@@ -419,6 +419,60 @@ flowchart LR
 2. OJ不是只把用户代码交给compile_and_run，而是要融合用户基于`default_template_code.cpp`的更改和`test_cases.cpp`
 
 
+## MySQL版题目设计
+
+1. 在数据库中设计可以远程登陆的MySQL用户，取名`oj_client`
+   ```sql
+   create user oj_client@'%' identified by 'Cydia4384!';
+   ```
+
+2. 设计表结构
+   - 数据库：oj
+      ```sql
+      mysql> create database oj;
+      Query OK, 1 row affected (0.06 sec)
+
+      mysql> show create database oj;
+      +----------+---------------------------------------------------------------+
+      | Database | Create Database                                               |
+      +----------+---------------------------------------------------------------+
+      | oj       | CREATE DATABASE `oj` /*!40100 DEFAULT CHARACTER SET latin1 */ |
+      +----------+---------------------------------------------------------------+
+      ```
+
+   - 表：oj_questions
+      ```sql
+      create table if not exists 'oj_questions'(
+         'number' int primary key auto_increment COMMENT '题目的编号',
+         'title' varchar(128) NOT NULL comment '题目的标题',
+         'star' varchar(8) NOT NULL comment '题目的难度',
+         'description' text NOT NULL comment '对应题目预设给用户看的代码',
+         'test_cases' text NOT NULL comment '对应题目的测试用例代码',
+         'cpu_limit' int default 1 comment '对应题目的超时时间',
+         'mem_limit' int default 50000 comment '对应题目的内存上限'
+      )
+      ```
+
+
+3. 给`oj_client`赋权
+   ```sql
+   mysql> grant all on oj.* to oj_client@'%';
+   ```
+
+
+4. 开始编码
+连接访问数据库
+有可能你的系统中，已经默认安装了mysql的开发包
+使用第三方引入的方式，不安装
+我们的oj_server基于MVC模式的，和数据打交道的只有一个oj_model模块，只需要更改该文件即可！！
+
+```bash
+ln -s ~/third_party/mysql-connector/include include
+ln -s ~/third_party/mysql-connector/lib lib
+
+include -> /home/chen/third_party/mysql-connector/include
+lib -> /home/chen/third_party/mysql-connector/lib
+```
 
 
 
@@ -503,4 +557,40 @@ $ make install //安装到系统中
 
 ### 测试
 ![Alt text](./ReadMePics/ctemplate的kv替换.png)
+
+# BugFix
+
+## 1. 编辑器内不能正确渲染“<  >”的bug
+### 问题：
+在编辑器中的“<  >”中的内容无法正确显示，我们猜测可能是因为ctemplate采用的是纯文本的替换，而尖括号又是html的特殊字符
+
+### 如何解决的：
+从`view`模块入手，在这份预设代码交给ctemplate拼接成最终的html之前，我们先对预设代码的string中的尖括号进行转义，确保在设置 `{{pre_code}}` 变量的值之前，代码中已经不存在html的特殊字符转义，以防止在页面中解析时出现意外结果。
+
+我们在Utility中的StringUtility加入转义函数：
+```cpp
+// 用来转义特殊字符，解决如果ctemplate在html中插入“<  >”导致错误
+static std::string EscapeHtml(const std::string& input) 
+{
+   std::string output;
+   for (char c : input) 
+   {
+         switch (c) 
+         {
+         case '<':
+            output += "&lt;";
+            break;
+         case '>':
+            output += "&gt;";
+            break;
+         default:
+            output += c;
+         }
+   }
+   return output;
+}
+```
+
+### 效果：
+![](./ReadMePics/无法显示include名称.png)
 

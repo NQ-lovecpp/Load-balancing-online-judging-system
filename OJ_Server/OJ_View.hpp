@@ -66,10 +66,12 @@ namespace ns_view
             // 2. 形成数据字典
             ctemplate::TemplateDictionary root("one_question");
             root.SetValue("number", q.number);
-            root.SetValue("title",q.title);
-            root.SetValue("star",q.star);
-            root.SetValue("description",q.description);
-            root.SetValue("pre_code",q.default_code);
+            root.SetValue("title", q.title);
+            root.SetValue("star", q.star);
+            root.SetValue("description", q.description);
+            // 改正编辑器内不能正确渲染“<  >”的bug
+            std::string modefied_defautlt_code = StringUtility::EscapeHtml(q.default_code);
+            root.SetValue("pre_code", modefied_defautlt_code);
 
             // 3. 获取被渲染的html
             ctemplate::Template *tpl = ctemplate::Template::GetTemplate(src_html, ctemplate::DO_NOT_STRIP);
