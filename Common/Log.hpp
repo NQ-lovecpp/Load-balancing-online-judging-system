@@ -14,6 +14,7 @@
 
 namespace ns_log
 {
+#ifndef LOG_VERSION_2
     using namespace ns_utility;
 
     // 日志等级
@@ -87,6 +88,7 @@ namespace ns_log
 
     #define LOG(level) Log(#level, __FILE__, __LINE__)
 
+#else
     class _Log
     {
     public:
@@ -183,5 +185,7 @@ namespace ns_log
     };
 
     _Log lg;
+
+#endif
 
 }

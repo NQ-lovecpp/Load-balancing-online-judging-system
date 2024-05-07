@@ -12,7 +12,7 @@
 #include "../Common/httplib.h"
 #include "../Common/Log.hpp"
 
-#define MySQL 1;
+// #define MySQL 1;
 #include "OJ_Model.hpp"
 #include "OJ_View.hpp"
 
@@ -310,7 +310,7 @@ namespace ns_controller
             // 2. 重新拼接 用户代码+测试用例代码 拼成一份新的代码
             Json::Value compile_value;
             compile_value["input"] = in_value["input"].asString();
-            compile_value["code"] = customer_code + "\n" + q.test_cases;
+            compile_value["code"] = customer_code + "\n" + q.test_cases; // 加一个换行符，以免两段代码粘在一起
             compile_value["cpu_value"] = q.cpu_limit;
             compile_value["mem_limit"] = q.mem_limit;
             Json::FastWriter writer;
