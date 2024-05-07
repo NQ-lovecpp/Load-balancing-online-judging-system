@@ -1011,7 +1011,7 @@ flowchart LR
 
 ```
 
-## 6.1 文件版题目设计
+### 文件版题目设计
 
 需求：
 1. 题目编号
@@ -1033,7 +1033,7 @@ flowchart LR
 2. OJ不是只把用户代码交给compile_and_run，而是要融合用户基于`default_template_code.cpp`的更改和`test_cases.cpp`
 
 
-## 6.2 MySQL版题目设计
+### MySQL版题目设计
 
 1. 在数据库中设计可以远程登陆的MySQL用户，取名`oj_client`
    ```sql
