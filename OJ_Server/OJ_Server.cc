@@ -1,7 +1,7 @@
 #include <iostream>
-#include "../Common/httplib.h" // 阻塞式多线程网络库
 #include "OJ_Controller.hpp"
-#include "Daemon.hpp"
+#include "../Common/httplib.h" // 阻塞式多线程网络库
+#include "../Common/Daemon.hpp"
 #include <unistd.h>
 #include <ctime>
 #include <cstdlib>
@@ -77,7 +77,7 @@ int main()
     //     "stdout" : "",
     //     "stderr" : ""
     // };
-    svr.Post(R"(/judge/(\d+))", [&ctrl](const Request &request, Response & response)
+    svr.Post(R"(/judge/(\d+))", [&ctrl](const Request &request, Response &response)
     {
         std::string number = request.matches[1];
         std::string result_json_str;

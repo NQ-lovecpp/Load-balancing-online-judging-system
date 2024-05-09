@@ -162,6 +162,13 @@ namespace ns_controller
             // *id = online[rand_id];
             // *m = &machines[online[rand_id]];
 
+            // for debug
+            cout << "-------------当前所有的负载--------------\n";
+            for(auto& e : machines)
+            {
+                cout << e.load << " ";
+            }
+            cout << "\n----------------------------------------\n";
 
             // 2. 轮询法
             // 遍历找到负载最小的机器
@@ -172,7 +179,7 @@ namespace ns_controller
             for(int i = 0; i < online_num; i++)
             {
                 uint64_t curr_load = machines[online[i]].GetLoad();
-                if(min_load <= curr_load)
+                if(min_load > curr_load)
                 {
                     min_load = curr_load;
                     *id = online[i];
