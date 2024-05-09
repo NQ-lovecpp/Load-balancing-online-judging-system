@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <ctime>
 #include <string>
 #include <atomic>
 #include <fstream>
@@ -198,6 +199,27 @@ namespace ns_utility
         {
             // 使用boost库中的split库
             boost::split((*target), str, boost::is_any_of(sep), boost::algorithm::token_compress_on);
+        }
+
+        // 用来转义特殊字符，解决如果ctemplate在html中插入“<  >”导致错误
+        static std::string EscapeHtml(const std::string& input) 
+        {
+            std::string output;
+            for (char c : input) 
+            {
+                switch (c) 
+                {
+                case '<':
+                    output += "&lt;";
+                    break;
+                case '>':
+                    output += "&gt;";
+                    break;
+                default:
+                    output += c;
+                }
+            }
+            return output;
         }
 
         StringUtility() {}

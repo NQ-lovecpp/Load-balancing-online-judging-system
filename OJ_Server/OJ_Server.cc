@@ -1,17 +1,31 @@
 #include <iostream>
-#include "../Common/httplib.h" // 阻塞式多线程网络库
 #include "OJ_Controller.hpp"
-#include "Daemon.hpp"
+#include "../Common/httplib.h" // 阻塞式多线程网络库
+#include "../Common/Daemon.hpp"
 #include <unistd.h>
+#include <ctime>
+#include <cstdlib>
 
 using namespace httplib;
 using namespace ns_controller;
 
 // #define DEAMON_ON
 
+
+static Controller *ctrl_ptr = nullptr;
+
+void Recovery(int signo)
+{
+    ctrl_ptr->RestoreService();
+}
+
 int main()
 {
+    signal(SIGQUIT, Recovery); // ctrl + "\"
+
     cout << "pid: " << getpid() << endl;
+
+    srand(time(nullptr));
 
 #ifdef DEAMON_ON
     // 守护进程化
@@ -22,6 +36,7 @@ int main()
     // 用户请求的服务，我们要给它做服务路由
     Server svr;
     Controller ctrl;
+    ctrl_ptr = &ctrl;
     
     // 获取所有的题目列表
     //                                          客户端请求        服务端响应内容
@@ -45,11 +60,24 @@ int main()
         response.set_content(html, "text/html; charset=utf-8");
     });
 
-    // 用户提交代码，使用我们的判题功能：
-    // 1. 每道题的测试用例
-    // 2. compile_and_run
+    // 用户提交代码，使用我们的判题功能： 1. 每道题的测试用例 2. compile_and_run
 
-    svr.Post(R"(/judge/(\d+))", [&ctrl](const Request &request, Response & response)
+    // 前端给到的json串：
+    // // in_json:
+    // {
+    //     "code" : "#include...", 
+    //     "input" : "程序的标准输入的内容"
+    // };
+
+    // 我们服务器要返回给前端网页的json串：
+    // out_json:
+    // {
+    //     "status" : "0", 
+    //     "reason" : "", 
+    //     "stdout" : "",
+    //     "stderr" : ""
+    // };
+    svr.Post(R"(/judge/(\d+))", [&ctrl](const Request &request, Response &response)
     {
         std::string number = request.matches[1];
         std::string result_json_str;

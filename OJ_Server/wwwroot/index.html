@@ -1,61 +1,52 @@
-<!DOCTYPE html>  
-<html lang="zh">  
-<head>  
-    <meta charset="UTF-8">  
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
-    <title>我的主页</title>  
-    <style>  
-        body {  
-            font-family: Arial, sans-serif;  
-            background-color: #f2f2f2;  
-            margin: 0;  
-            padding: 0;  
-        }  
-  
-        header {  
-            background-color: #585858;  
-            color: #fff;  
-            padding: 20px;  
-            text-align: center;  
-        }  
-  
-        main {  
-            margin: 20px;  
-            padding: 20px;  
-            background-color: #fff;  
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  
-        }  
-  
-        footer {  
-            background-color: #333;  
-            color: #fff;  
-            text-align: center;  
-            padding: 10px;  
-            position: fixed;  
-            bottom: 0;  
-            width: 100%;  
-        }  
-  
-        h1 {  
-            color: #333;  
-        }  
-  
-        p {  
-            line-height: 1.6;  
-        }  
-    </style>  
-</head>  
-<body>  
-    <header>  
-        <h1>My_OJ</h1>  
-    </header>  
-  
-    <main>  
-        <a href="/all_questions">点击我开始编程！</a>
-    </main>  
-  
-    <footer>  
-        <p>版权所有 &copy; 2023</p>  
-    </footer>  
-</body>  
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Online Judge</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .hero {
+            text-align: center;
+            padding: 100px 0;
+        }
+        .hero h1 {
+            font-size: 3em;
+            font-weight: bold;
+        }
+        .hero p {
+            font-size: 1.5em;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Online Judge</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/all_questions">Problem List</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <div class="hero">
+        <h1>Welcome to the Online Judge System</h1>
+        <p>Test your coding skills with various programming problems.</p>
+        <a class="btn btn-primary" href="/all_questions">Start Solving Problems</a>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
 </html>

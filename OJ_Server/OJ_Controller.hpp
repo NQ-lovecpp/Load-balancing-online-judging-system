@@ -5,10 +5,14 @@
 #include <string>
 #include <mutex>
 #include <vector>
+#include <algorithm>
+#include <cstdlib>
 
 #include "../Common/Utility.hpp"
 #include "../Common/httplib.h"
 #include "../Common/Log.hpp"
+
+// #define MySQL 1;
 #include "OJ_Model.hpp"
 #include "OJ_View.hpp"
 
@@ -27,9 +31,9 @@ namespace ns_controller
     class Machine
     {
     public:
-        std::string ip; // 编译服务的ip
-        int port;       // 编译服务的端口号
-        uint64_t load;  // 负载
+        std::string ip;  // 编译服务的ip
+        int port;        // 编译服务的端口号
+        uint64_t load;   // 负载
         std::mutex *mtx; // mutex是禁止拷贝的，必须使用指针
 
     public:
@@ -59,6 +63,14 @@ namespace ns_controller
             if(mtx) mtx->unlock();
         }
 
+        // 将主机的负载值清零
+        void ResetLoad()
+        {
+            if(mtx) mtx->lock();
+            load = 0;
+            if(mtx) mtx->unlock();
+        }
+
         // 获取主机负载
         uint64_t GetLoad()
         {
@@ -83,12 +95,20 @@ namespace ns_controller
         std::mutex mtx;                // 保证LoadBalancingModule的线程安全
 
     public:
+        LoadBalancingModule()
+        {
+            assert(LoadConf(service_machine));
+            LOG(INFO) << "加载所有主机信息： " << service_machine << " 成功" << "\n";
+        }
+        ~LoadBalancingModule() {}
+
+    public:
         bool LoadConf(const std::string &machine_conf)
         {
             std::ifstream in(machine_conf);
             if(!in.is_open())
             {
-                LOG(Fatal) << "加载：" << machine_conf << "配置文件失败" << "\n";
+                LOG(Fatal) << "加载配置文件：" << machine_conf << " 失败" << "\n";
                 return false;
             }
             std::string line;
@@ -99,7 +119,7 @@ namespace ns_controller
                 if(tokens.size() != 2)
                 {
 
-                    LOG(Warning) << "切分：" << line << " 失败，切分出了 " << tokens.size() << "个字串" << "\n";
+                    LOG(Warning) << "切分：" << line << " 失败，切分出了 " << tokens.size() << "个子串" << "\n";
                     continue;
                 }
                 Machine m;
@@ -137,16 +157,31 @@ namespace ns_controller
                 return false;
             }
 
+            // // 1. 随机数法
+            // int rand_id = rand() % online.size();
+            // *id = online[rand_id];
+            // *m = &machines[online[rand_id]];
+
+            // for debug
+            cout << "-------------当前所有的负载--------------\n";
+            for(auto& e : machines)
+            {
+                cout << e.load << " ";
+            }
+            cout << "\n----------------------------------------\n";
+
+            // 2. 轮询法
             // 遍历找到负载最小的机器
             *id = online[0];
             *m = &machines[online[0]];
 
-            uint64_t min_load = machines[online[0]].load;
+            uint64_t min_load = machines[online[0]].GetLoad();
             for(int i = 0; i < online_num; i++)
             {
-                if(min_load < machines[online[0]].GetLoad())
+                uint64_t curr_load = machines[online[i]].GetLoad();
+                if(min_load > curr_load)
                 {
-                    min_load = machines[online[i]].load;
+                    min_load = curr_load;
                     *id = online[i];
                     *m = &machines[online[i]];
                 }
@@ -156,12 +191,18 @@ namespace ns_controller
             return true;
         }
 
-        void LetOnline(int id)
+        // 当所有主机都离线了，统一上线所有机器
+        void LetOnline()
         {
-            // 当所有主机都离线了，统一上线
+            mtx.lock();
+            online.insert(online.end(), offline.begin(), offline.end());
+            offline.erase(offline.begin(), offline.end());
+            mtx.unlock();
 
+            LOG(INFO) << "所有的主机都上线啦!" << "\n";
         }
 
+        // 让某台主机下线
         void LetOffline(int id)
         {
             mtx.lock();
@@ -196,12 +237,6 @@ namespace ns_controller
             mtx.unlock();
         }
 
-    public:
-        LoadBalancingModule()
-        {
-            assert(LoadConf(service_machine));
-        }
-        ~LoadBalancingModule() {}
     };
 
 
@@ -214,6 +249,12 @@ namespace ns_controller
         LoadBalancingModule _load_balancer; // 核心负载均衡器
     public:
 
+        // 恢复后端编译服务，
+        void RestoreService()
+        {
+            _load_balancer.LetOnline();
+        }
+
         
         /// @brief 根据题目数据构建网页
         /// @param html 输出型参数，html内容的字符串
@@ -224,6 +265,9 @@ namespace ns_controller
             vector<struct Question> all;
             if(_model.GetAllQuestions(&all))
             {
+                std::sort(all.begin(), all.end(), [](const struct Question &q1, const struct Question &q2){
+                    return stoi(q1.number) < stoi(q2.number);
+                });
                 // 获取题目成功，将所有题目构建成网页
                 _view.AllExpandToHtml(all, html);
             }
@@ -258,6 +302,8 @@ namespace ns_controller
         /// @param out_json 结果
         void Judge(const std::string &number, const std::string in_json, std::string *out_json)
         {
+            // LOG(Debug) << "传入的json串：\n" << in_json << "\n题号：" << number << "\n";
+            
             // 0. 根据题目编号，拿到题目细节
             struct Question q;
             _model.GetOneQuestion(number, &q);
@@ -271,7 +317,7 @@ namespace ns_controller
             // 2. 重新拼接 用户代码+测试用例代码 拼成一份新的代码
             Json::Value compile_value;
             compile_value["input"] = in_value["input"].asString();
-            compile_value["code"] = customer_code + q.test_cases;
+            compile_value["code"] = customer_code + "\n" + q.test_cases; // 加一个换行符，以免两段代码粘在一起
             compile_value["cpu_value"] = q.cpu_limit;
             compile_value["mem_limit"] = q.mem_limit;
             Json::FastWriter writer;
@@ -288,12 +334,16 @@ namespace ns_controller
                     break;
                 }
 
-                LOG(Info) << "选择主机成功，主机id：" << id
-                          << "，地址端口号：" << m->ip << ":" << m->port << "\n";
-
                 // 4. 发起http请求，得到结果
                 Client cli(m->ip, m->port);
-                m->IncreaseLoad();
+                m->IncreaseLoad(); 
+                LOG(Info) << "选择主机成功，主机id：" << id
+                          << "，地址端口号：" << m->ip << ":" << m->port 
+                          << " ，当前负载：" << m->load
+                          << "\n";
+
+                _load_balancer.ShowMachines();  // 仅仅是为了用来调试
+
                 if(auto res = cli.Post("/compile_and_run", compile_string, "application/json; charset=utf-8"))
                 {
                     // 5. 如果成功，将结果赋值给out_json
@@ -310,7 +360,7 @@ namespace ns_controller
                 {
                     // 请求失败
                     LOG(Error) << "当前请求的主机id：" << id
-                               << "详情：" << m->ip << ":" << m->port << "可能已经离线..." << "\n";
+                               << " 详情：" << m->ip << ":" << m->port << " 可能已经离线..." << "\n";
                     // m->DecreaseLoad();
                     _load_balancer.LetOffline(id);
                     _load_balancer.ShowMachines();  // 仅仅是为了用来调试
@@ -318,8 +368,6 @@ namespace ns_controller
 
             }
 
-            
-            // 5. 将结果赋值给out_json
         }
 
         Controller() {}

@@ -53,6 +53,16 @@
         "complex": "cpp",
         "unordered_set": "cpp",
         "cfenv": "cpp",
-        "typeindex": "cpp"
-    }
+        "typeindex": "cpp",
+        "cassert": "cpp"
+    },
+    "makefile.makefilePath": "/home/chen/Load-balancing-online-judging-system/OJ_Server/Makefile",
+
+    // "github.copilot.advanced": {
+    //     "authProvider": "github-enterprise",
+    // },
+    // "github-enterprise.uri": "http://89286191DC9C43D8B17F2D74B71458C7@152.136.138.142:28443"
 }
+
+
+

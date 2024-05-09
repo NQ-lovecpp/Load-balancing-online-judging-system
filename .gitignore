@@ -30,4 +30,7 @@
 *.exe
 *.out
 *.app
-comp
+
+# My
+./OJ_Server/include
+./OJ_Server/lib

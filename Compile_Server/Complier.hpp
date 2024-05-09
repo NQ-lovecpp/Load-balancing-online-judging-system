@@ -71,7 +71,7 @@ namespace ns_compiler
 
                 dup2(_stderr, stderr->_fileno); // 重定向到_stderr文件
 
-                // 重定向不会影响进程打开的文件（不影响文件描述符表）
+                // exec系统调用不会影响进程打开的文件（不影响文件描述符表）
                 // g++ target -o target src -std=c++11
                 execlp("g++", "g++", "-o", PathUtility::Exe(file_name).c_str(), \
                  PathUtility::Src(file_name).c_str(), "-std=c++11", "-D", "COMPILER_ONLINE", nullptr); // 这里的nullptr表示结尾
