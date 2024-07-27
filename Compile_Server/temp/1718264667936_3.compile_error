@@ -1,0 +1,8 @@
+./temp/1718264667936_3.cpp: In function ‘void Test1()’:
+./temp/1718264667936_3.cpp:42:28: error: ‘class Solution’ has no member named ‘isPalindrome’
+   42 |     bool _ret = Solution().isPalindrome(_x);
+      |                            ^~~~~~~~~~~~
+./temp/1718264667936_3.cpp: In function ‘void Test2()’:
+./temp/1718264667936_3.cpp:62:28: error: ‘class Solution’ has no member named ‘isPalindrome’
+   62 |     bool _ret = Solution().isPalindrome(_x);
+      |                            ^~~~~~~~~~~~
