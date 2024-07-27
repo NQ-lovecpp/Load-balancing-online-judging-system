@@ -1,7 +1,11 @@
 #include <iostream>
-#include "OJ_Controller.hpp"
+#include "./OJ_Controller.hpp"
 #include "../Common/httplib.h" // 阻塞式多线程网络库
 #include "../Common/Daemon.hpp"
+#include <fcntl.h>
+#include <cstdlib>
+#include <string>
+#include <cstdio>
 #include <unistd.h>
 #include <ctime>
 #include <cstdlib>
@@ -9,7 +13,7 @@
 using namespace httplib;
 using namespace ns_controller;
 
-// #define DEAMON_ON
+#define DEAMON_ON
 
 
 static Controller *ctrl_ptr = nullptr;
@@ -29,7 +33,14 @@ int main()
 
 #ifdef DEAMON_ON
     // 守护进程化
-    daemon(true, false);
+    Daemon(false, true);
+    std::string path = "/home/chen/OJServerLog/ojserverlog_";
+    path += std::to_string(getpid()).c_str();
+    path += ".log";
+    int log_fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    dup2(log_fd, fileno(stdout));
+    dup2(log_fd, fileno(stderr));
+    // close(log_fd);
 #endif
 
 

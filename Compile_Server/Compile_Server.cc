@@ -1,5 +1,8 @@
 #include "Compile_And_Run.hpp"
 #include "../Common/httplib.h"
+#include "../Common/Daemon.hpp"
+
+#define DEAMON_ON
 
 using namespace ns_compile_and_run;
 using namespace httplib;
@@ -36,6 +39,19 @@ int main(int argc, char* argv[])
     }
 
 
+#ifdef DEAMON_ON
+    // 守护进程化
+    Daemon(false, true);
+    std::string path = "/home/chen/OJServerLog/compileserverlog_";
+    path += std::to_string(getpid()).c_str();
+    path += ".log";
+    int log_fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    dup2(log_fd, fileno(stdout));
+    dup2(log_fd, fileno(stderr));
+    // close(log_fd);
+#endif
+
+
     // using Handler = std::function<void(const Request &, Response &)>;
     Server svr;
 
@@ -55,7 +71,8 @@ int main(int argc, char* argv[])
         }
     });
 
-    svr.set_base_dir("./wwwroot");
+    std::cout << "listen..." << std::endl;
+    // svr.set_base_dir("./wwwroot");
     svr.listen("0.0.0.0", atoi(argv[1]));
 
     return 0;

@@ -2417,11 +2417,16 @@ $ sudo yum install -y boost-devel //是boost 开发库
 <a id="section4"></a>
 我们的项目使用了google的开源项目ctemplate，ctemplate支持几种文字替换的形式（基本方式是使用“{{}}”来表示需要被替换的内容），下面介绍一下如何安装：
 ```
+sudo yum groupinstall "Development Tools"
+sudo yum install autoconf automake libtool
+
 $ git clone https://github.com/OlafvdSpek/ctemplate.git
 $ ./autogen.sh
 $ ./configure
 $ make //编译
 $ make install //安装到系统中
+
+export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 ```
 
 >注意:
