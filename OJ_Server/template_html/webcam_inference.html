@@ -1,0 +1,141 @@
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ONNX Runtime Web Demo</title>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; }
+        video { width: 320px; height: 240px; border: 1px solid black; }
+        canvas { display: none; }
+        .progress-bar {
+            width: 100%;
+            background-color: #f3f3f3;
+            margin: 10px 0;
+        }
+        .progress-bar-fill {
+            width: 0;
+            height: 20px;
+            background-color: #4caf50;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+        }
+        .slider-container {
+            width: 320px;
+            margin: 10px 0;
+        }
+        .slider-container input {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>ONNX Runtime Web Demo</h1>
+    
+    <div class="progress-bar">
+        <div class="progress-bar-fill" id="progress-bar-fill">0%</div>
+    </div>
+    
+    <div class="slider-container">
+        <label for="draw-threshold">Draw Threshold: <span id="threshold-value">0.1</span></label>
+        <input type="range" id="draw-threshold" min="0.1" max="1" step="0.1" value="0.1">
+    </div>
+    
+    <video id="video" autoplay></video>
+    <canvas id="canvas" width="320" height="240"></canvas>
+    
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+    <script>
+        let drawThreshold = 0.1;
+        
+        async function setupCamera() {
+            const video = document.getElementById('video');
+            const constraints = { video: true };
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    video.play();
+                };
+            } catch (err) {
+                console.error('Error accessing the camera', err);
+            }
+        }
+
+        async function loadModel() {
+            const session = await ort.InferenceSession.create('/yolov3_mouse_other.onnx', {
+                executionProviders: ['wasm'],
+                wasm: { worker: new Worker(URL.createObjectURL(new Blob([''], { type: 'text/javascript' }))) }
+            });
+            return session;
+        }
+
+        function updateProgressBar(percentage) {
+            const progressBarFill = document.getElementById('progress-bar-fill');
+            progressBarFill.style.width = percentage + '%';
+            progressBarFill.textContent = percentage + '%';
+        }
+
+        async function runInference(session, imageData) {
+            const inputTensor = new ort.Tensor('float32', imageData.data, [1, 3, imageData.height, imageData.width]);
+            const feeds = { input: inputTensor };
+            const results = await session.run(feeds);
+            return results;
+        }
+
+        function captureImage(video) {
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            return imageData;
+        }
+
+        function processResults(results) {
+            console.log(results);
+        }
+
+        document.getElementById('draw-threshold').addEventListener('input', (event) => {
+            drawThreshold = parseFloat(event.target.value);
+            document.getElementById('threshold-value').textContent = drawThreshold;
+        });
+
+        async function main() {
+            await setupCamera();
+            
+            let session;
+            const downloadInterval = setInterval(() => {
+                const randomIncrement = Math.floor(Math.random() * 10);
+                updateProgressBar(randomIncrement);
+            }, 500);
+
+            try {
+                session = await loadModel();
+                clearInterval(downloadInterval);
+                updateProgressBar(100);
+            } catch (error) {
+                console.error('Error loading the model:', error);
+                clearInterval(downloadInterval);
+                updateProgressBar(0);
+            }
+
+            const video = document.getElementById('video');
+            video.addEventListener('play', () => {
+                const process = async () => {
+                    if (video.paused || video.ended) return;
+                    const imageData = captureImage(video);
+                    const results = await runInference(session, imageData);
+                    processResults(results);
+                    requestAnimationFrame(process);
+                };
+                process();
+            });
+        }
+
+        main();
+    </script>
+</body>
+</html>

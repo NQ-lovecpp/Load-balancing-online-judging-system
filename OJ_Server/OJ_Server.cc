@@ -13,7 +13,7 @@
 using namespace httplib;
 using namespace ns_controller;
 
-#define DEAMON_ON
+// #define DEAMON_ON
 
 
 static Controller *ctrl_ptr = nullptr;
@@ -96,6 +96,16 @@ int main()
         response.set_content(result_json_str, "application/json; charset=utf-8");
 
         // response.set_content("指定题目的判题：" + number, "text/plain; charset=utf-8");
+    });
+
+
+    // 新增网页推送的路由
+    svr.Get("/webcam_inference", [&ctrl](const Request &request, Response &response)
+    {
+        // HTML内容
+        std::string html_content;
+        ctrl.GetInferPage(&html_content);
+        response.set_content(html_content, "text/html; charset=utf-8");
     });
 
 

@@ -255,6 +255,25 @@ namespace ns_controller
             _load_balancer.LetOnline();
         }
 
+
+        // 推理服务的网页
+        bool GetInferPage(std::string *html)
+        {
+            bool ret = true;
+            std::string src_html = "./template_html/webcam_inference.html";
+
+            // 2. 形成字典
+            ctemplate::TemplateDictionary root("all_questions");
+
+            // 3. 获取被渲染的html
+            ctemplate::Template *tpl = ctemplate::Template::GetTemplate(src_html, ctemplate::DO_NOT_STRIP);
+            
+            // 4. 开始渲染
+            tpl->Expand(html, &root);
+            
+            return ret;
+        }
+
         
         /// @brief 根据题目数据构建网页
         /// @param html 输出型参数，html内容的字符串
