@@ -13,7 +13,7 @@
 using namespace httplib;
 using namespace ns_controller;
 
-// #define DEAMON_ON
+#define DEAMON_ON
 
 
 static Controller *ctrl_ptr = nullptr;
