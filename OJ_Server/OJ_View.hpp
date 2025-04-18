@@ -4,6 +4,7 @@
 #include <string>
 #include <ctemplate/template.h>
 
+#define MySQL
 #include "OJ_Model.hpp"
 
         // struct Question

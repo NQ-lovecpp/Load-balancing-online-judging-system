@@ -1,0 +1,1146 @@
+--- FILE: ./all_extracted_code.txt ---
+内容:
+
+
+--- FILE: ./questions.list ---
+内容:
+1 【入门】两数之和 简单 1 30000
+2 【入门】回文数 简单 1 30000
+3 【动态规划】第N个泰波那契数 简单 1 30000
+4 【动态规划】使用最小花费爬楼梯 简单 1 30000
+5 【双指针】在排序数组中查找元素的第一个和最后一个位置 中等 1 30000
+6 【双指针】搜索旋转排序数组中的最小值 中等 1 30000
+7 【背包问题】01背包 中等 2 100000
+8 【DFS】全排列 中等 3 100000
+
+--- FILE: ./extract.py ---
+内容:
+import os
+
+def is_image_dir(path):
+    return os.path.basename(os.path.normpath(path)) == "image"
+
+def process_source_file(filepath):
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        return f"【无法读取文件内容，可能是二进制文件或编码问题：{e}】"
+
+def main():
+    output_filename = "all_extracted_code.txt"
+    with open(output_filename, 'w', encoding='utf-8') as out_file:
+        # 从当前目录开始递归遍历
+        for root, dirs, files in os.walk('.'):
+            # 排除名为 build 的目录
+            if 'build' in dirs:
+                dirs.remove('build')
+            if 'conf' in dirs:
+                dirs.remove('conf')
+            if 'docker_image_data' in dirs:
+                dirs.remove('docker_image_data')
+            if 'odb_builds' in dirs:
+                dirs.remove('odb_builds')
+            if 'api_builds' in dirs:
+                dirs.remove('api_builds')
+
+            relative_root = os.path.relpath(root, '.')
+            # 判断当前目录是否为 image 目录
+            if is_image_dir(root):
+                for filename in files:
+                    rel_path = os.path.join(relative_root, filename)
+                    out_file.write(f"--- IMAGE FILE: {rel_path} ---\n")
+                    out_file.write(f"文件名: {filename}\n\n")
+            else:
+                for filename in files:
+                    rel_path = os.path.join(relative_root, filename)
+                    out_file.write(f"--- FILE: {rel_path} ---\n")
+                    content = process_source_file(os.path.join(root, filename))
+                    out_file.write("内容:\n")
+                    out_file.write(content + "\n\n")
+
+if __name__ == '__main__':
+    main()
+
+
+--- FILE: 7/default_template_code.cpp ---
+内容:
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+
+using namespace std;
+
+class Solution {
+public:
+    pair<int, int> knapsack(int n, int V, vector<int>& v, vector<int>& w) {
+        const int N = 1010;
+        int dp[N][N];
+        
+        // 解决第一问：背包至多能装多大价值的物品
+        memset(dp, 0, sizeof(dp));
+        for (int i = 1; i <= n; i++) {
+            for (int j = 0; j <= V; j++) {
+                dp[i][j] = dp[i - 1][j];
+                if (j >= v[i - 1]) {
+                    dp[i][j] = max(dp[i][j], dp[i - 1][j - v[i - 1]] + w[i - 1]);
+                }
+            }
+        }
+        int max_value = dp[n][V];
+
+        // 解决第二问：背包恰好装满，至多能装多大价值的物品
+        memset(dp, 0, sizeof(dp));
+        for (int j = 1; j <= V; j++) {
+            dp[0][j] = -1;
+        }
+        for (int i = 1; i <= n; i++) {
+            for (int j = 0; j <= V; j++) {
+                dp[i][j] = dp[i - 1][j];
+                if (j >= v[i - 1] && dp[i - 1][j - v[i - 1]] != -1) {
+                    dp[i][j] = max(dp[i][j], dp[i - 1][j - v[i - 1]] + w[i - 1]);
+                }
+            }
+        }
+        int exact_value = dp[n][V] == -1 ? 0 : dp[n][V];
+
+        return {max_value, exact_value};
+    }
+};
+
+
+--- FILE: 7/test_cases.cpp ---
+内容:
+#ifndef COMPILER_ONLINE
+#include "default_template_code.cpp"
+#endif
+
+#include <iostream>
+#include <vector>
+
+void Test1() {
+    // 输入
+    int n = 3;
+    int V = 5;
+    vector<int> v = {2, 4, 1};
+    vector<int> w = {10, 5, 4};
+    // 预期结果
+    pair<int, int> _expected = {14, 9};
+
+    // 定义一个临时对象，调用成员函数
+    pair<int, int> _result = Solution().knapsack(n, V, v, w);
+
+    if (_result == _expected) {
+        std::cout << "通过测试用例1，OK！" << std::endl;
+    } else {
+        std::cerr << "没有通过用例1，failed！" << std::endl;
+    }
+}
+
+void Test2() {
+    // 输入
+    int n = 3;
+    int V = 8;
+    vector<int> v = {12, 11, 6};
+    vector<int> w = {6, 8, 8};
+    // 预期结果
+    pair<int, int> _expected = {8, 0};
+
+    // 定义一个临时对象，调用成员函数
+    pair<int, int> _result = Solution().knapsack(n, V, v, w);
+
+    if (_result == _expected) {
+        std::cout << "通过测试用例2，OK！" << std::endl;
+    } else {
+        std::cerr << "没有通过用例2，failed！" << std::endl;
+    }
+}
+
+int main() {
+    Test1();
+    Test2();
+
+    return 0;
+}
+
+
+--- FILE: 7/description.txt ---
+内容:
+你有一个背包，最多能容纳的体积是 `V`。现在有 `n` 个物品，第 `i` 个物品的体积为 `v[i]`，价值为 `w[i]`。
+
+**第一问**：求这个背包至多能装多大价值的物品？
+
+**第二问**：若背包恰好装满，求至多能装多大价值的物品？如果没有方案使背包恰好装满，则返回 `0`。
+
+## 输入描述
+
+第一行两个整数 `n` 和 `V`，表示物品个数和背包体积。
+
+接下来 `n` 行，每行两个数 `v[i]` 和 `w[i]`，分别表示第 `i` 个物品的体积和价值。
+
+## 输出描述
+
+输出有两行，第一行输出第一问的答案，第二行输出第二问的答案，如果无解请输出 `0`。
+
+## 示例
+
+### 示例 1
+
+- **输入**：
+  ```
+  3 5
+  2 10
+  4 5
+  1 4
+  ```
+- **输出**：
+  ```
+  14
+  9
+  ```
+- **解释**：
+  - 装第一个和第三个物品时总价值最大，合计14。
+  - 装第二个和第三个物品可以使得背包恰好装满，合计9。
+
+### 示例 2
+
+- **输入**：
+  ```
+  3 8
+  12 6
+  11 8
+  6 8
+  ```
+- **输出**：
+  ```
+  8
+  0
+  ```
+- **解释**：
+  - 装第三个物品时总价值最大，但是无法使背包恰好装满。
+  - 如果要求背包恰好装满，则没有可行方案。
+
+## 提示
+
+- 1 <= `n` <= 1000
+- 1 <= `V` <= 1000
+- 1 <= `v[i]`, `w[i]` <= 1000
+
+--- FILE: 8/default_template_code.cpp ---
+内容:
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+class Solution {
+    vector<vector<int>> ret;
+    vector<int> path;
+    bool check[7] = {false};
+    
+public:
+    vector<vector<int>> permute(vector<int>& nums) {
+        dfs(nums);
+        return ret;
+    }
+
+    void dfs(vector<int>& nums) {
+        if (path.size() == nums.size()) {
+            ret.push_back(path);
+            return;
+        }
+
+        for (int i = 0; i < nums.size(); i++) {
+            if (!check[i]) {
+                path.push_back(nums[i]);
+                check[i] = true;
+                dfs(nums);
+                // 回溯
+                path.pop_back();
+                check[i] = false;
+            }
+        }
+    }
+};
+
+
+--- FILE: 8/test_cases.cpp ---
+内容:
+#ifndef COMPILER_ONLINE
+#include "default_template_code.cpp"
+#endif
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+void Test1() {
+    // 输入
+    vector<int> _input = {1, 2, 3};
+    // 预期结果
+    vector<vector<int>> _expected = {{1, 2, 3}, {1, 3, 2}, {2, 1, 3}, {2, 3, 1}, {3, 1, 2}, {3, 2, 1}};
+
+    // 定义一个临时对象，调用成员函数
+    vector<vector<int>> _result = Solution().permute(_input);
+
+    // 比较结果
+    std::sort(_expected.begin(), _expected.end());
+    std::sort(_result.begin(), _result.end());
+
+    if (_result == _expected) {
+        std::cout << "通过测试用例1，OK！" << std::endl;
+    } else {
+        std::cerr << "没有通过用例1，failed！" << std::endl;
+    }
+}
+
+void Test2() {
+    // 输入
+    vector<int> _input = {0, 1};
+    // 预期结果
+    vector<vector<int>> _expected = {{0, 1}, {1, 0}};
+
+    // 定义一个临时对象，调用成员函数
+    vector<vector<int>> _result = Solution().permute(_input);
+
+    // 比较结果
+    std::sort(_expected.begin(), _expected.end());
+    std::sort(_result.begin(), _result.end());
+
+    if (_result == _expected) {
+        std::cout << "通过测试用例2，OK！" << std::endl;
+    } else {
+        std::cerr << "没有通过用例2，failed！" << std::endl;
+    }
+}
+
+void Test3() {
+    // 输入
+    vector<int> _input = {1};
+    // 预期结果
+    vector<vector<int>> _expected = {{1}};
+
+    // 定义一个临时对象，调用成员函数
+    vector<vector<int>> _result = Solution().permute(_input);
+
+    if (_result == _expected) {
+        std::cout << "通过测试用例3，OK！" << std::endl;
+    } else {
+        std::cerr << "没有通过用例3，failed！" << std::endl;
+    }
+}
+
+int main() {
+    Test1();
+    Test2();
+    Test3();
+
+    return 0;
+}
+
+
+--- FILE: 8/description.txt ---
+内容:
+# 全排列
+
+## 题目描述
+
+给定一个不含重复数字的数组 `nums`，返回其所有可能的全排列。你可以按任意顺序返回答案。
+
+## 示例
+
+### 示例 1
+
+- **输入**：nums = [1, 2, 3]
+- **输出**：[[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]
+
+### 示例 2
+
+- **输入**：nums = [0, 1]
+- **输出**：[[0, 1], [1, 0]]
+
+### 示例 3
+
+- **输入**：nums = [1]
+- **输出**：[[1]]
+
+## 提示
+
+- 1 <= nums.length <= 6
+- -10 <= nums[i] <= 10
+- nums 中的所有整数 互不相同
+
+
+--- FILE: 1/default_template_code.cpp ---
+内容:
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <unordered_map>
+
+using namespace std;
+
+class Solution 
+{
+public:
+    vector<int> twoSum(vector<int>& nums, int target) 
+    {
+        // 哈希表可以很快的知道：
+        // 1. 有没有存（key）
+        // 2. 存了多少（value）
+        unordered_map<int, int> HashTable; // <nums[i], i>
+        for(int i = 0; i < nums.size(); i++)
+        {
+            if(HashTable.count(target - nums[i]) != 0)
+            {
+                return {HashTable[target - nums[i]], i};
+            }
+            HashTable[nums[i]] = i; 
+        }
+        return {-1, -1};
+    }
+};
+
+--- FILE: 1/test_cases.cpp ---
+内容:
+#ifndef COMPILER_ONLINE
+
+#include "default_template_code.cpp"
+
+#endif
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+void Test1()
+{
+    // 输入
+    vector<int> _arr = {2, 7, 11, 15};
+    int _target = 9;
+    // 预期结果
+    vector<int> _result = {0, 1};
+
+
+    // 定义一个临时对象，调用成员函数
+    vector<int> _ret_vector = Solution().twoSum(_arr, _target);
+    std::sort(_ret_vector.begin(), _ret_vector.end());
+    if(std::equal(_ret_vector.begin(), _ret_vector.end(), _result.begin()))
+    {
+        std::cout << "通过测试用例1，OK！" << std::endl;
+    }
+    else
+    {
+        std::cerr << "没有通过用例1，falied！" << std::endl; 
+    }
+}
+
+void Test2()
+{
+    // 输入
+    vector<int> _arr = {3, 2, 4};
+    int _target = 6;
+    // 预期结果
+    vector<int> _result = {1, 2};
+
+
+    // 定义一个临时对象，调用成员函数
+    vector<int> _ret_vector = Solution().twoSum(_arr, _target);
+    std::sort(_ret_vector.begin(), _ret_vector.end());
+    if(std::equal(_ret_vector.begin(), _ret_vector.end(), _result.begin()))
+    {
+        std::cout << "通过测试用例2，OK！" << std::endl;
+    }
+    else
+    {
+        std::cerr << "没有通过用例2，falied！" << std::endl; 
+    }
+}
+
+
+int main()
+{
+    Test1();
+    Test2();
+    
+    return 0;
+}
+
+--- FILE: 1/description.txt ---
+内容:
+给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出 和为目标值 target  的那 两个 整数，并返回它们的数组下标。
+
+你可以假设每种输入只会对应一个答案。但是，数组中同一个元素在答案里不能重复出现。
+
+你可以按任意顺序返回答案。
+
+ 
+
+示例 1：
+
+输入：nums = [2,7,11,15], target = 9
+输出：[0,1]
+解释：因为 nums[0] + nums[1] == 9 ，返回 [0, 1] 。
+示例 2：
+
+输入：nums = [3,2,4], target = 6
+输出：[1,2]
+示例 3：
+
+输入：nums = [3,3], target = 6
+输出：[0,1]
+ 
+
+提示：
+
+2 <= nums.length <= 104
+-109 <= nums[i] <= 109
+-109 <= target <= 109
+只会存在一个有效答案
+ 
+
+进阶：你可以想出一个时间复杂度小于 O(n2) 的算法吗？
+
+--- FILE: 2/default_template_code.cpp ---
+内容:
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <unordered_map>
+
+using namespace std;
+
+class Solution 
+{
+public:
+    bool isPalindrome(int x) 
+    {
+
+    }
+};
+
+--- FILE: 2/test_cases.cpp ---
+内容:
+#ifndef COMPILER_ONLINE
+#include "./default_template_code.cpp"
+#endif
+
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+void Test1()
+{
+    // 输入
+    int _x = 121;
+    // 预期结果
+    bool _result = true;
+
+
+    // 定义一个临时对象，调用成员函数
+    bool _ret = Solution().isPalindrome(_x);
+    if(_ret == _result)
+    {
+        std::cout << "通过测试用例1，OK！" << std::endl;
+    }
+    else
+    {
+        std::cerr << "没有通过用例1，Falied！" << std::endl; 
+    }
+}
+
+void Test2()
+{
+    // 输入
+    int _x = 10;
+    // 预期结果
+    bool _result = false;
+
+
+    // 定义一个临时对象，调用成员函数
+    bool _ret = Solution().isPalindrome(_x);
+    if(_ret == _result)
+    {
+        std::cout << "通过测试用例1，OK！" << std::endl;
+    }
+    else
+    {
+        std::cerr << "没有通过用例1，Falied！" << std::endl; 
+    }
+}
+
+
+int main()
+{
+    Test1();
+    Test2();
+    
+    return 0;
+}
+
+--- FILE: 2/description.txt ---
+内容:
+给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出 和为目标值 target  的那 两个 整数，并返回它们的数组下标。
+
+你可以假设每种输入只会对应一个答案。但是，数组中同一个元素在答案里不能重复出现。
+
+你可以按任意顺序返回答案。
+
+ 
+
+示例 1：
+
+输入：nums = [2,7,11,15], target = 9
+输出：[0,1]
+解释：因为 nums[0] + nums[1] == 9 ，返回 [0, 1] 。
+示例 2：
+
+输入：nums = [3,2,4], target = 6
+输出：[1,2]
+示例 3：
+
+输入：nums = [3,3], target = 6
+输出：[0,1]
+ 
+
+提示：
+
+2 <= nums.length <= 104
+-109 <= nums[i] <= 109
+-109 <= target <= 109
+只会存在一个有效答案
+ 
+
+进阶：你可以想出一个时间复杂度小于 O(n2) 的算法吗？
+
+--- FILE: 3/default_template_code.cpp ---
+内容:
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+class Solution 
+{
+public:
+    int tribonacci(int n) 
+    {
+        if (n == 0 || n == 1) return n;
+        vector<int> dp(n + 1); // dp[i] 表示：第 i 个泰波那契数的值。
+        dp[0] = 0, dp[1] = 1, dp[2] = 1; // 初始化
+        // 从左往右填表
+        for (int i = 3; i <= n; i++) 
+        {
+            dp[i] = dp[i - 1] + dp[i - 2] + dp[i - 3];
+        }
+        // 返回结果
+        return dp[n];
+    }
+};
+
+
+--- FILE: 3/test_cases.cpp ---
+内容:
+#ifndef COMPILER_ONLINE
+#include "./default_template_code.cpp"
+#endif
+
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+void Test1()
+{
+    // 输入
+    int _x = 121;
+    // 预期结果
+    bool _result = true;
+
+
+    // 定义一个临时对象，调用成员函数
+    bool _ret = Solution().isPalindrome(_x);
+    if(_ret == _result)
+    {
+        std::cout << "通过测试用例1，OK！" << std::endl;
+    }
+    else
+    {
+        std::cerr << "没有通过用例1，Falied！" << std::endl; 
+    }
+}
+
+void Test2()
+{
+    // 输入
+    int _x = 10;
+    // 预期结果
+    bool _result = false;
+
+
+    // 定义一个临时对象，调用成员函数
+    bool _ret = Solution().isPalindrome(_x);
+    if(_ret == _result)
+    {
+        std::cout << "通过测试用例1，OK！" << std::endl;
+    }
+    else
+    {
+        std::cerr << "没有通过用例1，Falied！" << std::endl; 
+    }
+}
+
+
+int main()
+{
+    Test1();
+    Test2();
+    
+    return 0;
+}
+
+--- FILE: 3/description.txt ---
+内容:
+泰波那契序列 Tn 定义如下： 
+
+- T0 = 0
+- T1 = 1
+- T2 = 1
+
+且在 n >= 0 的条件下，Tn+3 = Tn + Tn+1 + Tn+2。
+
+## 题目描述
+
+给你整数 n，请返回第 n 个泰波那契数 Tn 的值。
+
+## 示例
+
+### 示例 1
+
+- **输入**：n = 4
+- **输出**：4
+- **解释**：  
+  - T_3 = 0 + 1 + 1 = 2
+  - T_4 = 1 + 1 + 2 = 4
+
+### 示例 2
+
+- **输入**：n = 25
+- **输出**：1389537
+
+## 提示
+
+- 0 <= n <= 37
+- 答案保证是一个 32 位整数，即 `answer <= 2^31 - 1`.
+
+
+--- FILE: 4/default_template_code.cpp ---
+内容:
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+class Solution 
+{
+public:
+    int minCostClimbingStairs(vector<int>& cost) 
+    {
+        int n = cost.size();
+        // 初始化一个 dp表
+        vector<int> dp(n + 1, 0);
+        // 初始化
+        dp[0] = dp[1] = 0;
+        // 填表
+        for (int i = 2; i <= n; i++) 
+        {
+            dp[i] = min(cost[i - 1] + dp[i - 1], cost[i - 2] + dp[i - 2]);
+        }
+        // 返回结果
+        return dp[n];
+    }
+};
+
+
+--- FILE: 4/test_cases.cpp ---
+内容:
+#ifndef COMPILER_ONLINE
+#include "default_template_code.cpp"
+#endif
+
+#include <iostream>
+#include <vector>
+
+void Test1() {
+    // 输入
+    vector<int> _input = {10, 15, 20};
+    // 预期结果
+    int _expected = 15;
+
+    // 定义一个临时对象，调用成员函数
+    int _result = Solution().minCostClimbingStairs(_input);
+
+    if (_result == _expected) {
+        std::cout << "通过测试用例1，OK！" << std::endl;
+    } else {
+        std::cerr << "没有通过用例1，failed！" << std::endl;
+    }
+}
+
+void Test2() {
+    // 输入
+    vector<int> _input = {1, 100, 1, 1, 1, 100, 1, 1, 100, 1};
+    // 预期结果
+    int _expected = 6;
+
+    // 定义一个临时对象，调用成员函数
+    int _result = Solution().minCostClimbingStairs(_input);
+
+    if (_result == _expected) {
+        std::cout << "通过测试用例2，OK！" << std::endl;
+    } else {
+        std::cerr << "没有通过用例2，failed！" << std::endl;
+    }
+}
+
+int main() {
+    Test1();
+    Test2();
+
+    return 0;
+}
+
+
+--- FILE: 4/description.txt ---
+内容:
+给你一个整数数组 `cost`，其中 `cost[i]` 是从楼梯第 i 个台阶向上爬需要支付的费用。一旦你支付此费用，即可选择向上爬一个或者两个台阶。
+
+你可以选择从下标为 0 或下标为 1 的台阶开始爬楼梯。
+
+请你计算并返回达到楼梯顶部的最低花费。
+
+## 示例
+
+### 示例 1
+
+- **输入**：cost = [10, 15, 20]
+- **输出**：15
+- **解释**：  
+  - 从下标为 1 的台阶开始
+  - 支付 15，向上爬两个台阶，到达楼梯顶部
+  - 总花费为 15
+
+### 示例 2
+
+- **输入**：cost = [1, 100, 1, 1, 1, 100, 1, 1, 100, 1]
+- **输出**：6
+- **解释**：
+  - 从下标为 0 的台阶开始
+  - 支付 1，向上爬两个台阶，到达下标为 2
+  - 支付 1，向上爬两个台阶，到达下标为 4
+  - 支付 1，向上爬两个台阶，到达下标为 6
+  - 支付 1，向上爬一个台阶，到达下标为 7
+  - 支付 1，向上爬两个台阶，到达下标为 9
+  - 支付 1，向上爬一个台阶，到达楼梯顶部
+  - 总花费为 6
+
+## 提示
+
+- 2 <= cost.length <= 1000
+- 0 <= cost[i] <= 999
+
+
+--- FILE: 5/default_template_code.cpp ---
+内容:
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+class Solution {
+public:
+    vector<int> searchRange(vector<int>& nums, int target) {
+        // 处理边界情况
+        if (nums.size() == 0) return {-1, -1};
+        int begin = 0;
+
+        // 1. 二分查找左端点
+        int left = 0, right = nums.size() - 1;
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            if (nums[mid] < target) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+
+        // 判断是否有结果
+        if (nums[left] != target) {
+            return {-1, -1};
+        } else {
+            begin = left; // 标记左端点
+        }
+
+        // 2. 二分查找右端点
+        left = 0, right = nums.size() - 1;
+        while (left < right) {
+            int mid = left + (right - left + 1) / 2;
+            if (nums[mid] <= target) {
+                left = mid;
+            } else {
+                right = mid - 1;
+            }
+        }
+
+        return {begin, right};
+    }
+};
+
+
+--- FILE: 5/test_cases.cpp ---
+内容:
+#ifndef COMPILER_ONLINE
+#include "default_template_code.cpp"
+#endif
+
+#include <iostream>
+#include <vector>
+
+void Test1() {
+    // 输入
+    vector<int> _input = {5, 7, 7, 8, 8, 10};
+    int _target = 8;
+    // 预期结果
+    vector<int> _expected = {3, 4};
+
+    // 定义一个临时对象，调用成员函数
+    vector<int> _result = Solution().searchRange(_input, _target);
+
+    if (_result == _expected) {
+        std::cout << "通过测试用例1，OK！" << std::endl;
+    } else {
+        std::cerr << "没有通过用例1，failed！" << std::endl;
+    }
+}
+
+void Test2() {
+    // 输入
+    vector<int> _input = {5, 7, 7, 8, 8, 10};
+    int _target = 6;
+    // 预期结果
+    vector<int> _expected = {-1, -1};
+
+    // 定义一个临时对象，调用成员函数
+    vector<int> _result = Solution().searchRange(_input, _target);
+
+    if (_result == _expected) {
+        std::cout << "通过测试用例2，OK！" << std::endl;
+    } else {
+        std::cerr << "没有通过用例2，failed！" << std::endl;
+    }
+}
+
+void Test3() {
+    // 输入
+    vector<int> _input = {};
+    int _target = 0;
+    // 预期结果
+    vector<int> _expected = {-1, -1};
+
+    // 定义一个临时对象，调用成员函数
+    vector<int> _result = Solution().searchRange(_input, _target);
+
+    if (_result == _expected) {
+        std::cout << "通过测试用例3，OK！" << std::endl;
+    } else {
+        std::cerr << "没有通过用例3，failed！" << std::endl;
+    }
+}
+
+int main() {
+    Test1();
+    Test2();
+    Test3();
+
+    return 0;
+}
+
+--- FILE: 5/description.txt ---
+内容:
+给你一个按照非递减顺序排列的整数数组 `nums`，和一个目标值 `target`。请你找出给定目标值在数组中的开始位置和结束位置。
+
+如果数组中不存在目标值 `target`，返回 `[-1, -1]`。
+
+你必须设计并实现时间复杂度为 O(log n) 的算法解决此问题。
+
+## 示例
+
+### 示例 1
+
+- **输入**：nums = [5, 7, 7, 8, 8, 10], target = 8
+- **输出**：[3, 4]
+- **解释**：给定目标值 8 在数组中的开始位置是 3，结束位置是 4。
+
+### 示例 2
+
+- **输入**：nums = [5, 7, 7, 8, 8, 10], target = 6
+- **输出**：[-1, -1]
+- **解释**：数组中不存在目标值 6。
+
+### 示例 3
+
+- **输入**：nums = [], target = 0
+- **输出**：[-1, -1]
+- **解释**：空数组中不存在目标值 0。
+
+## 提示
+
+- 0 <= nums.length <= 105
+- -109 <= nums[i] <= 109
+- nums 是一个非递减数组
+- -109 <= target <= 109
+
+
+--- FILE: 6/default_template_code.cpp ---
+内容:
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+class Solution {
+public:
+    int findMin(vector<int>& nums) {
+        int left = 0, right = nums.size() - 1;
+        int x = nums[right]; // 标记最后一个位置的值
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            if (nums[mid] > x) {
+                left = mid + 1; // 旋转点在右侧
+            } else {
+                right = mid; // 旋转点在左侧或是mid
+            }
+        }
+        return nums[left]; // 旋转点即是最小值
+    }
+};
+
+
+--- FILE: 6/test_cases.cpp ---
+内容:
+#ifndef COMPILER_ONLINE
+#include "default_template_code.cpp"
+#endif
+
+#include <iostream>
+#include <vector>
+
+void Test1() {
+    // 输入
+    vector<int> _input = {3, 4, 5, 1, 2};
+    // 预期结果
+    int _expected = 1;
+
+    // 定义一个临时对象，调用成员函数
+    int _result = Solution().findMin(_input);
+
+    if (_result == _expected) {
+        std::cout << "通过测试用例1，OK！" << std::endl;
+    } else {
+        std::cerr << "没有通过用例1，failed！" << std::endl;
+    }
+}
+
+void Test2() {
+    // 输入
+    vector<int> _input = {4, 5, 6, 7, 0, 1, 2};
+    // 预期结果
+    int _expected = 0;
+
+    // 定义一个临时对象，调用成员函数
+    int _result = Solution().findMin(_input);
+
+    if (_result == _expected) {
+        std::cout << "通过测试用例2，OK！" << std::endl;
+    } else {
+        std::cerr << "没有通过用例2，failed！" << std::endl;
+    }
+}
+
+void Test3() {
+    // 输入
+    vector<int> _input = {11, 13, 15, 17};
+    // 预期结果
+    int _expected = 11;
+
+    // 定义一个临时对象，调用成员函数
+    int _result = Solution().findMin(_input);
+
+    if (_result == _expected) {
+        std::cout << "通过测试用例3，OK！" << std::endl;
+    } else {
+        std::cerr << "没有通过用例3，failed！" << std::endl;
+    }
+}
+
+int main() {
+    Test1();
+    Test2();
+    Test3();
+
+    return 0;
+}
+
+
+--- FILE: 6/description.txt ---
+内容:
+# 寻找旋转排序数组中的最小值
+
+给你一个长度为 `n` 的数组 `nums`，它预先按照升序排列，经由 `1` 到 `n` 次旋转后，得到输入数组。  
+例如，原数组 `nums = [0, 1, 2, 4, 5, 6, 7]` 在旋转后可能得到：
+- 旋转 4 次，结果是 `[4, 5, 6, 7, 0, 1, 2]`
+- 旋转 7 次，结果是 `[0, 1, 2, 4, 5, 6, 7]`
+
+注意，数组 `[a[0], a[1], a[2], ..., a[n-1]]` 旋转一次的结果为数组 `[a[n-1], a[0], a[1], a[2], ..., a[n-2]]`。
+
+## 题目描述
+
+给你一个元素值互不相同的数组 `nums`，它原来是一个升序排列的数组，并按上述情形进行了多次旋转。请你找出并返回数组中的最小元素。
+
+你必须设计一个时间复杂度为 O(log n) 的算法解决此问题。
+
+## 示例
+
+### 示例 1
+
+- **输入**：nums = [3, 4, 5, 1, 2]
+- **输出**：1
+- **解释**：原数组为 `[1, 2, 3, 4, 5]`，旋转 3 次后得到输入数组。
+
+### 示例 2
+
+- **输入**：nums = [4, 5, 6, 7, 0, 1, 2]
+- **输出**：0
+- **解释**：原数组为 `[0, 1, 2, 4, 5, 6, 7]`，旋转 3 次后得到输入数组。
+
+### 示例 3
+
+- **输入**：nums = [11, 13, 15, 17]
+- **输出**：11
+- **解释**：原数组为 `[11, 13, 15, 17]`，旋转 4 次后得到输入数组。
+
+## 提示
+
+- n == nums.length
+- 1 <= n <= 5000
+- -5000 <= nums[i] <= 5000
+- nums 中的所有整数互不相同
+- nums 原来是一个升序排序的数组，并进行了 1 至 n 次旋转
+
+

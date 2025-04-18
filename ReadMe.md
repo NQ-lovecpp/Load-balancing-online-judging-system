@@ -858,7 +858,7 @@ temp:
 > ![](./ReadMePics/文件结构简图.png)
 
 ### I. 本地测试
-我们可以对“CompileAndRun”进行本地测试，给run函数传递一个json串，包括试运行的代码，然后看看返回的json串是否符合预期。
+我们可以对"CompileAndRun"进行本地测试，给run函数传递一个json串，包括试运行的代码，然后看看返回的json串是否符合预期。
 
 >预期：
 1. 能否返回各种错误信息
@@ -1066,7 +1066,7 @@ int main()
 
     // 用户要根据题目编号，获取题目的内容
     // /questions/100 -> 正则匹配
-    // R"(...)"，语法特性：raw string，让“\”成为普通字符，不用做转义
+    // R"(...)"，语法特性：raw string，让"\"成为普通字符，不用做转义
     svr.Get(R"(/question/(\d+))", [&ctrl](const Request &request, Response &response)
     {
         std::string number = request.matches[1]; // 下标1是正则匹配到的数字(\d+)
@@ -1455,7 +1455,7 @@ OJ_Controller逻辑控制是OJ_Controller中的核心。也是我们整个服务
    > 说明一下：
    > - 用户要根据题目编号，获取题目的内容
    > - `/questions/100` -> 会被正则匹配
-   > - R"(...)" -> C++的语法特性raw string，让“\”成为普通字符，不用做转> 义
+   > - R"(...)" -> C++的语法特性raw string，让"\"成为普通字符，不用做转> 义
 
 3. 当前端网页向服务器发出 `/judge/具体题号` 的 `Post` 请求，表明希望判断某道题目的代码是否能通过测试用例：
    ```cpp
@@ -1845,7 +1845,7 @@ void OneExpandToHtml(const struct Question &q, std::string *html)
    root.SetValue("title", q.title);
    root.SetValue("star", q.star);
    root.SetValue("description", q.description);
-   // 改正编辑器内不能正确渲染“<  >”的bug
+   // 改正编辑器内不能正确渲染"  >"的bug
    std::string modefied_defautlt_code = StringUtility::EscapeHtml(q.default_code);
    root.SetValue("pre_code", modefied_defautlt_code);
 
@@ -2280,7 +2280,7 @@ void OneExpandToHtml(const struct Question &q, std::string *html)
                 resultDiv.appendChild(stdoutHeader);
 
                 const stdoutText = document.createElement("pre");
-                stdoutText.textContent = data.stdout || "无输出"; // 若没有标准输出，则显示“无输出”
+                stdoutText.textContent = data.stdout || "无输出"; // 若没有标准输出，则显示"无输出"
                 resultDiv.appendChild(stdoutText);
 
                 // 标准错误标题
@@ -2289,7 +2289,7 @@ void OneExpandToHtml(const struct Question &q, std::string *html)
                 resultDiv.appendChild(stderrHeader);
 
                 const stderrText = document.createElement("pre");
-                stderrText.textContent = data.stderr || "无错误"; // 若没有标准错误，则显示“无错误”
+                stderrText.textContent = data.stderr || "无错误"; // 若没有标准错误，则显示"无错误"
                 resultDiv.appendChild(stderrText);
             }
         }
@@ -2365,7 +2365,7 @@ void OneExpandToHtml(const struct Question &q, std::string *html)
 
 ## 1. 安装jsoncpp
 
-<a id="section1"></a>
+### CentOS
 
 ```bash
 [chen@ali-centos-7 Load-balancing-online-judging-system]$ sudo yum install -y jsoncpp-devel
@@ -2378,8 +2378,15 @@ Nothing to do
 [chen@ali-centos-7 Load-balancing-online-judging-system]$ 
 ```
 
+### Ubuntu
+
+```bash
+sudo apt-get update
+sudo apt-get install -y libjsoncpp-dev
+```
 
 ## 2. 安装cpp-httplib (header-only的)
+
 <a id="section2"></a>
 
 cpp-httplib gitee链接：https://gitee.com/yuanfeng1897/cpp-httplib?_from=gitee_search
@@ -2409,13 +2416,27 @@ int main()
 ```
 
 ## 3. 安装boost库
+
+### CentOS
+
 ```bash
 $ sudo yum install -y boost-devel //是boost 开发库
 ```
 
+### Ubuntu
+
+```bash
+sudo apt-get update
+sudo apt-get install -y libboost-all-dev
+```
+
 ## 4. 安装与测试ctemplate
+
 <a id="section4"></a>
-我们的项目使用了google的开源项目ctemplate，ctemplate支持几种文字替换的形式（基本方式是使用“{{}}”来表示需要被替换的内容），下面介绍一下如何安装：
+我们的项目使用了google的开源项目ctemplate，ctemplate支持几种文字替换的形式（基本方式是使用"{{}}"来表示需要被替换的内容），下面介绍一下如何安装：
+
+### CentOS
+
 ```
 sudo yum groupinstall "Development Tools"
 sudo yum install autoconf automake libtool
@@ -2425,6 +2446,22 @@ $ ./autogen.sh
 $ ./configure
 $ make //编译
 $ make install //安装到系统中
+
+export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+```
+
+### Ubuntu
+
+```
+sudo apt-get update
+sudo apt-get install -y build-essential autoconf automake libtool
+
+git clone https://github.com/OlafvdSpek/ctemplate.git
+cd ctemplate
+./autogen.sh
+./configure
+make
+sudo make install
 
 export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 ```
@@ -2563,10 +2600,10 @@ CTemplate的缓存机制通过缓存模板文件的内容和解析后的结构�
 
 # BugFix
 
-## 1. 编辑器内不能正确渲染“<  >”的bug
+## 1. 编辑器内不能正确渲染"  >"的bug
 >问题：
 
-在编辑器中的“<  >”中的内容无法正确显示，我们猜测可能是因为ctemplate采用的是纯文本的替换，而尖括号又是html的特殊字符
+在编辑器中的"  >"中的内容无法正确显示，我们猜测可能是因为ctemplate采用的是纯文本的替换，而尖括号又是html的特殊字符
 
 >如何解决的：
 
@@ -2574,7 +2611,7 @@ CTemplate的缓存机制通过缓存模板文件的内容和解析后的结构�
 
 我们在Utility中的StringUtility中加入转义函数：
 ```cpp
-// 用来转义特殊字符，解决如果ctemplate在html中插入“<  >”导致错误
+// 用来转义特殊字符，解决如果ctemplate在html中插入"  >"导致错误
 static std::string EscapeHtml(const std::string& input) 
 {
    std::string output;

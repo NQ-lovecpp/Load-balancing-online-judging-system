@@ -1,3 +1,5 @@
+// #define MySQL
+
 #ifdef MySQL
 
 #pragma once
@@ -11,7 +13,12 @@
 
 #include "../Common/Utility.hpp"
 #include "../Common/Log.hpp"
-#include "./include/mysql.h"
+
+extern "C" {
+#  include <mysql/plugin_auth_common.h>
+#  include <mysql/mysql.h>
+}
+
 
 // 根据题目list文件：加载所有的题目信息到内存中
 // model：主要用来和数据进行交互，对外提供访问数据的接口
@@ -35,8 +42,8 @@ namespace ns_model
     };
 
     const std::string question_table_name = "oj_questions";
-    const std::string host = "127.0.0.1";
-    const std::string user = "oj_client";
+    const std::string host = "117.72.15.209";
+    const std::string user = "chen";
     const std::string passwd = "Cydia4384!";
     const std::string database = "oj";
     const unsigned int port = 3306;

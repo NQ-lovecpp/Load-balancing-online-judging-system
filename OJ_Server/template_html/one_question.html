@@ -5,96 +5,400 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{number}}. {{title}}</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #1abc9c;
+            --light-bg: #f8f9fa;
+            --dark-bg: #2d333b;
+            --editor-bg: #1e1e1e;
+            --success-color: #22c55e;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --text-light: #f8fafc;
+            --text-dark: #334155;
+            --text-muted: #94a3b8;
+            --border-radius: 6px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition-speed: 0.2s;
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: all var(--transition-speed) ease;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--light-bg);
             margin: 0;
             padding: 0;
+            color: var(--text-dark);
+            line-height: 1.6;
+            overflow: hidden;
         }
 
         header {
-            background-color: #333; /* 深色背景 */
-            color: #fff; /* 浅色文本 */
-            padding: 15px;
-            text-align: center;
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            padding: 12px 20px;
+            box-shadow: var(--box-shadow);
+            position: relative;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 60px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.5rem;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+        }
+
+        header h1 i {
+            margin-right: 8px;
+            color: var(--secondary-color);
         }
 
         .split-container {
             display: flex;
-            height: calc(100vh - 50px); /* 除去 header */
+            height: calc(100vh - 100px); /* 除去 header 和 footer */
             position: relative;
         }
 
         .left-panel {
             background-color: #ffffff;
-            padding: 20px;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-            width: 60%; /* 左侧初始宽度 */
-            overflow-y: auto;
+            width: 50%; /* 左侧初始宽度 */
+            overflow: hidden;
             position: relative; /* 以便分割线使用 */
+            display: flex;
+            flex-direction: column;
         }
 
         .right-panel {
-            background-color: #ffffff;
-            padding: 20px;
-            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
-            width: 40%; /* 右侧初始宽度 */
-            overflow-y: auto;
+            background-color: var(--editor-bg);
+            width: 50%; /* 右侧初始宽度 */
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .outer-divider {
-            width: 5px;
+            width: 6px;
             cursor: ew-resize;
-            background-color: #ccc;
+            background-color: var(--light-bg);
             position: absolute;
             height: 100%;
+            z-index: 10;
+        }
+
+        .outer-divider:hover, .outer-divider:active {
+            background-color: var(--secondary-color);
         }
 
         .inner-divider {
-            height: 5px;
+            height: 6px;
             cursor: ns-resize;
-            background-color: #ccc;
-            position: absolute;
+            background-color: var(--light-bg);
             width: 100%;
+            z-index: 10;
+        }
+
+        .inner-divider:hover, .inner-divider:active {
+            background-color: var(--secondary-color);
         }
 
         .top-part {
-            height: 60%; /* 左侧顶部的初始高度 */
+            height: 70%; /* 左侧顶部的初始高度 */
             overflow-y: auto;
+            padding: 20px 25px;
+            border-bottom: 1px solid #e5e7eb;
         }
 
         .bottom-part {
-            height: 40%; /* 左侧底部的初始高度 */
+            height: 30%; /* 左侧底部的初始高度 */
             overflow-y: auto;
-            padding-top: 10px; /* 留出空间给分割线 */
+            padding: 20px 25px;
+            background-color: #f8f9fa;
+        }
+
+        #problem-info h2 {
+            color: var(--text-dark);
+            font-weight: 600;
+            margin-bottom: 20px;
+            font-size: 1.7rem;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .difficulty-badge {
+            display: inline-block;
+            background-color: #dcfce7;
+            color: #16a34a;
+            padding: 5px 12px;
+            border-radius: 100px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 25px;
+        }
+
+        .difficulty-badge.easy {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+
+        .difficulty-badge.medium {
+            background-color: #fff7ed;
+            color: #ea580c;
+        }
+
+        .difficulty-badge.hard {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+
+        #problem-info pre {
+            background-color: var(--light-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 0;
         }
 
         footer {
-            background-color: #333; /* 深色背景 */
-            color: #fff; /* 浅色文本 */
+            background-color: var(--primary-color);
+            color: var(--text-light);
             text-align: center;
             padding: 10px;
             position: fixed;
             bottom: 0;
             width: 100%;
+            font-size: 0.9rem;
+            z-index: 100;
+            height: 40px;
+        }
+
+        .code-editor-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
         .code-editor {
-            height: 80%; /* Ace 编辑器的高度 */
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .editor-header {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #2b2b2b;
+            border-bottom: 1px solid #3e3e3e;
+        }
+
+        .editor-header .language {
+            color: #a9b7c6;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+
+        .editor-header .language i {
+            margin-right: 6px;
+            font-size: 1rem;
+        }
+
+        .submit-button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 12px 20px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .submit-button:hover {
+            background-color: #159a7f;
+            transform: translateY(-1px);
+        }
+
+        .submit-button i {
+            margin-right: 8px;
+        }
+
+        .editor-footer {
+            padding: 15px;
+            background-color: #2b2b2b;
+            border-top: 1px solid #3e3e3e;
+        }
+
+        .result-section {
+            height: 100%;
+        }
+
+        .result-header {
+            padding: 12px 16px;
+            background-color: #eef2f6;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 1rem;
         }
 
         .result {
-            padding: 10px;
-            background-color: #f8f9fa; /* 浅色背景 */
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 0;
+            background-color: #ffffff;
+            height: calc(100% - 42px);
+            overflow-y: auto;
         }
 
+        .result-item {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 16px;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-item .title {
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
+
+        .result-item .title i {
+            margin-right: 8px;
+            width: 16px;
+            text-align: center;
+        }
+
+        .result-item .content {
+            background-color: var(--light-bg);
+            padding: 12px;
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            word-break: break-word;
+            overflow-x: auto;
+        }
+
+        .result-item .content.pre {
+            font-family: 'Consolas', monospace;
+            white-space: pre-wrap;
+        }
+
+        .status-ok {
+            color: var(--success-color);
+        }
+
+        .status-error {
+            color: var(--error-color);
+        }
+
+        .status-warning {
+            color: var(--warning-color);
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.04);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 992px) {
+            .split-container {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .left-panel, .right-panel {
+                width: 100%;
+                height: 50vh;
+            }
+
+            .outer-divider {
+                width: 100%;
+                height: 6px;
+                cursor: ns-resize;
+            }
+        }
+
+        /* 加载动画 */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-result {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .empty-result i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
     <header>
-        <h1>My_OJ</h1>
+        <h1><i class="fas fa-code"></i> My_OJ</h1>
     </header>
 
     <div class="split-container">
@@ -103,33 +407,52 @@
             <!-- 顶部题目信息 -->
             <div class="top-part" id="problem-info">
                 <h2>{{number}}. {{title}}</h2>
-                <h4>难度：{{star}}</h4>
+                <div class="difficulty-badge easy"><i class="fas fa-star"></i> 难度：{{star}}</div>
                 <pre>{{description}}</pre>
             </div>
 
             <!-- 分割线，分隔题目信息和结果 -->
-            <div class="inner-divider" id="inner-divider" style="top: 60%;"></div>
+            <div class="inner-divider" id="inner-divider"></div>
 
             <!-- 底部代码提交结果 -->
             <div class="bottom-part" id="result-container">
-                <div class="result">
-                    <!-- 显示代码提交的结果 -->
+                <div class="result-section">
+                    <div class="result-header">
+                        <i class="fas fa-terminal"></i> 提交结果
+                    </div>
+                    <div class="result">
+                        <div class="empty-result">
+                            <i class="far fa-clipboard"></i>
+                            <p>提交代码后会在这里显示结果</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- 外部分割线 -->
-        <div class="outer-divider" id="outer-divider" style="left: 60%;"></div>
+        <div class="outer-divider" id="outer-divider" style="left: 50%;"></div>
 
         <!-- 右侧模块 -->
         <div class="right-panel">
-            <div id="code-editor" class="code-editor">{{pre_code}}</div>
-            <button class="btn btn-primary" onclick="submitCode()">提交代码</button>
+            <div class="code-editor-container">
+                <div class="editor-header">
+                    <div class="language">
+                        <i class="fas fa-file-code"></i> C++
+                    </div>
+                </div>
+                <div id="code-editor" class="code-editor">{{pre_code}}</div>
+                <div class="editor-footer">
+                    <button class="submit-button" onclick="submitCode()">
+                        <i class="fas fa-paper-plane"></i> 提交代码
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
     <footer>
-        <p>版权所有 &copy; 2024 My_OJ 系统</p>
+        <span><i class="far fa-copyright"></i> 版权所有 2024 My_OJ 系统</span>
     </footer>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
@@ -140,20 +463,90 @@
     <script>
         // Ace 编辑器初始化
         var editor = ace.edit("code-editor");
-        editor.setTheme("ace/theme/idle_fingers");
+        editor.setTheme("ace/theme/monokai");
         editor.session.setMode("ace/mode/c_cpp");
-        editor.setFontSize(16);
+        editor.setFontSize(14);
         editor.session.setTabSize(4);
         editor.setOptions({
             enableBasicAutocompletion: true,
             enableSnippets: true,
-            enableLiveAutocompletion: true
+            enableLiveAutocompletion: true,
+            showPrintMargin: false,
+            highlightActiveLine: true
+        });
+
+        // 根据难度设置对应的样式
+        function setDifficultyBadge() {
+            const difficultyText = document.querySelector(".difficulty-badge").textContent.split("：")[1].trim().toLowerCase();
+            const badge = document.querySelector(".difficulty-badge");
+            
+            if (difficultyText.includes("中等") || difficultyText.includes("medium")) {
+                badge.classList.remove("easy");
+                badge.classList.add("medium");
+            } else if (difficultyText.includes("困难") || difficultyText.includes("hard")) {
+                badge.classList.remove("easy");
+                badge.classList.add("hard");
+            }
+        }
+
+        // 判断测试结果是否通过
+        function isResultSuccess(data) {
+            // 根据Compile_And_Run.hpp中的代码，status是整数值，转为string:
+            // status = 0: 编译运行成功
+            // status < 0: 代码为空(-1)、未知错误(-2)、编译错误(-3)
+            // status > 0: 程序运行崩溃(如内存超限SIGABRT(6)、CPU超时SIGXCPU(24)等)
+            
+            // 判断status是否为"0"或0 (成功的标志)
+            if (data.status === "0" || data.status === 0) {
+                return true;
+            }
+            
+            // 检查status<0的情况，这些都是编译阶段的错误，肯定不成功
+            if (data.status < 0) {
+                return false;
+            }
+            
+            // 检查reason中是否包含"成功"关键词
+            if (data.reason && data.reason.includes("成功")) {
+                return true;
+            }
+            
+            return false;
+        }
+
+        // 页面加载后设置难度样式和初始化内部分隔条位置
+        document.addEventListener("DOMContentLoaded", function() {
+            setDifficultyBadge();
+            // 设置内部分隔条的初始位置
+            const leftPanel = document.querySelector(".left-panel");
+            const innerDivider = document.getElementById("inner-divider");
+            const topPart = document.querySelector(".top-part");
+            const bottomPart = document.querySelector(".bottom-part");
+            
+            if (innerDivider && topPart && bottomPart) {
+                // 计算初始位置（百分比）
+                let initialTopHeight = 70; // 初始顶部占70%
+                topPart.style.height = `${initialTopHeight}%`;
+                bottomPart.style.height = `${100 - initialTopHeight}%`;
+                
+                // 放置分隔条
+                innerDivider.style.top = `${initialTopHeight}%`;
+            }
         });
 
         function submitCode() {
             var code = editor.getValue(); // 获取编辑器中的代码
             var number = document.querySelector("#problem-info h2").textContent.split(".")[0].trim(); // 题号
             var judge_url = "/judge/" + number; // 构建请求 URL
+
+            // 添加加载状态
+            const resultDiv = document.querySelector(".result");
+            resultDiv.innerHTML = `
+                <div class="empty-result">
+                    <div class="spinner"></div>
+                    <p>正在评测代码，请稍候...</p>
+                </div>
+            `;
 
             $.ajax({
                 method: 'POST', // 请求方式
@@ -166,48 +559,157 @@
                 }),
                 success: function(data) {
                     showResult(data); // 处理返回的结果
+                },
+                error: function() {
+                    resultDiv.innerHTML = `
+                        <div class="empty-result">
+                            <i class="fas fa-exclamation-circle status-error"></i>
+                            <p>提交失败，请稍后重试</p>
+                        </div>
+                    `;
                 }
             });
 
             function showResult(data) {
-                const resultDiv = document.querySelector("#result-container .result"); // 获取结果显示区域
+                const resultDiv = document.querySelector(".result"); // 获取结果显示区域
                 resultDiv.innerHTML = ""; // 清空之前的内容
 
-                // 状态码标题
-                const statusHeader = document.createElement("h4");
-                statusHeader.textContent = "状态码:";
-                resultDiv.appendChild(statusHeader);
+                // 解析状态和状态码显示
+                const success = isResultSuccess(data);
+                
+                // 获取详细状态信息
+                const statusDetail = getStatusDetail(data);
+                
+                // 详细结果容器
+                const detailsContainer = document.createElement("div");
+                detailsContainer.style.backgroundColor = "#f8f9fa";
+                detailsContainer.style.borderRadius = "4px";
+                detailsContainer.style.marginBottom = "10px";
+                detailsContainer.style.border = "1px solid #e5e7eb";
+                detailsContainer.style.overflow = "hidden";
+                resultDiv.appendChild(detailsContainer);
 
-                const statusText = document.createElement("p");
-                statusText.textContent = `${data.status}`; // 状态码的值
-                resultDiv.appendChild(statusText);
+                // 状态码
+                const statusItem = document.createElement("div");
+                statusItem.className = "result-item";
+                statusItem.style.borderBottom = "1px solid #e5e7eb";
+                statusItem.style.marginBottom = "0";
+                statusItem.style.backgroundColor = "#fff";
+                
+                statusItem.innerHTML = `
+                    <div class="title">
+                        <i class="${statusDetail.icon} ${statusDetail.class}"></i> 状态码
+                    </div>
+                    <div class="content ${statusDetail.class}">
+                        ${statusDetail.status}
+                    </div>
+                `;
+                detailsContainer.appendChild(statusItem);
 
-                // 原因标题
-                const reasonHeader = document.createElement("h4");
-                reasonHeader.textContent = "原因:";
-                resultDiv.appendChild(reasonHeader);
+                // 原因
+                const reasonItem = document.createElement("div");
+                reasonItem.className = "result-item";
+                reasonItem.style.borderBottom = "1px solid #e5e7eb";
+                reasonItem.style.marginBottom = "0";
+                reasonItem.style.backgroundColor = "#fff";
+                
+                reasonItem.innerHTML = `
+                    <div class="title">
+                        <i class="fas fa-comment-alt"></i> 原因
+                    </div>
+                    <div class="content">
+                        ${data.reason || "未知原因"}
+                    </div>
+                `;
+                detailsContainer.appendChild(reasonItem);
 
-                const reasonText = document.createElement("p");
-                reasonText.textContent = `${data.reason}`; // 原因的值
-                resultDiv.appendChild(reasonText);
+                // 标准输出
+                const stdoutItem = document.createElement("div");
+                stdoutItem.className = "result-item";
+                stdoutItem.style.borderBottom = "1px solid #e5e7eb";
+                stdoutItem.style.marginBottom = "0";
+                stdoutItem.style.backgroundColor = "#fff";
+                stdoutItem.innerHTML = `
+                    <div class="title">
+                        <i class="fas fa-terminal"></i> 标准输出
+                    </div>
+                    <div class="content pre">
+                        ${data.stdout || "无输出"}
+                    </div>
+                `;
+                detailsContainer.appendChild(stdoutItem);
 
-                // 标准输出标题
-                const stdoutHeader = document.createElement("h4");
-                stdoutHeader.textContent = "标准输出:";
-                resultDiv.appendChild(stdoutHeader);
+                // 标准错误
+                const stderrItem = document.createElement("div");
+                stderrItem.className = "result-item";
+                stderrItem.style.marginBottom = "0";
+                stderrItem.style.backgroundColor = "#fff";
+                stderrItem.innerHTML = `
+                    <div class="title">
+                        <i class="fas fa-exclamation-triangle"></i> 标准错误
+                    </div>
+                    <div class="content pre">
+                        ${data.stderr || "无错误"}
+                    </div>
+                `;
+                detailsContainer.appendChild(stderrItem);
+            }
 
-                const stdoutText = document.createElement("pre");
-                stdoutText.textContent = data.stdout || "无输出"; // 若没有标准输出，则显示“无输出”
-                resultDiv.appendChild(stdoutText);
-
-                // 标准错误标题
-                const stderrHeader = document.createElement("h4");
-                stderrHeader.textContent = "标准错误:";
-                resultDiv.appendChild(stderrHeader);
-
-                const stderrText = document.createElement("pre");
-                stderrText.textContent = data.stderr || "无错误"; // 若没有标准错误，则显示“无错误”
-                resultDiv.appendChild(stderrText);
+            // 根据status获取详细状态信息
+            function getStatusDetail(data) {
+                let detail = {
+                    status: data.status,
+                    title: data.reason || "未知原因",
+                    icon: "fas fa-info-circle",
+                    class: ""
+                };
+                
+                // 状态码直接转为数字来比较
+                const statusCode = parseInt(data.status);
+                
+                if (statusCode === 0) {
+                    // 成功
+                    detail.status = "0 (编译运行成功)";
+                    detail.icon = "fas fa-check-circle";
+                    detail.class = "status-ok";
+                } else if (statusCode === -1) {
+                    // 代码为空
+                    detail.status = "-1 (代码为空)";
+                    detail.icon = "fas fa-times-circle";
+                    detail.class = "status-error";
+                } else if (statusCode === -2) {
+                    // 未知错误
+                    detail.status = "-2 (未知错误)";
+                    detail.icon = "fas fa-times-circle";
+                    detail.class = "status-error";
+                } else if (statusCode === -3) {
+                    // 编译错误
+                    detail.status = "-3 (编译错误)";
+                    detail.icon = "fas fa-times-circle";
+                    detail.class = "status-error";
+                } else if (statusCode === 6) {
+                    // SIGABRT 内存超限
+                    detail.status = "6 (SIGABRT - 内存超限)";
+                    detail.icon = "fas fa-exclamation-circle";
+                    detail.class = "status-warning";
+                } else if (statusCode === 24) {
+                    // SIGXCPU CPU超时
+                    detail.status = "24 (SIGXCPU - CPU超时)";
+                    detail.icon = "fas fa-exclamation-circle";
+                    detail.class = "status-warning";
+                } else if (statusCode > 0) {
+                    // 其他运行错误
+                    detail.status = `${statusCode} (程序运行崩溃)`;
+                    detail.icon = "fas fa-exclamation-circle";
+                    detail.class = "status-warning";
+                } else {
+                    // 其他未知情况
+                    detail.status = `${statusCode} (未知状态)`;
+                    detail.icon = "fas fa-question-circle";
+                    detail.class = "status-warning";
+                }
+                
+                return detail;
             }
         }
 
@@ -219,21 +721,44 @@
 
         outerDivider.addEventListener("mousedown", function() {
             isDraggingOuter = true;
+            document.body.style.cursor = "ew-resize";
         });
 
         document.addEventListener("mouseup", function() {
             isDraggingOuter = false;
+            isDraggingInner = false;
+            document.body.style.cursor = "default";
         });
 
         document.addEventListener("mousemove", function(e) {
-            if (!isDraggingOuter) return;
+            if (!isDraggingOuter && !isDraggingInner) return;
 
-            const offsetX = e.clientX; /* 当前鼠标X轴坐标 */
-            const containerWidth = document.querySelector(".split-container").offsetWidth; /* 容器宽度 */
-            const leftWidth = (offsetX / containerWidth) * 100; /* 计算左侧占比 */
-            leftPanel.style.width = `${leftWidth}%`;
-            rightPanel.style.width = `${100 - leftWidth}%`;
-            outerDivider.style.left = `${leftWidth}%`;
+            if (isDraggingOuter) {
+                const offsetX = e.clientX; /* 当前鼠标X轴坐标 */
+                const containerWidth = document.querySelector(".split-container").offsetWidth; /* 容器宽度 */
+                const leftWidth = (offsetX / containerWidth) * 100; /* 计算左侧占比 */
+                
+                // 设置最小宽度限制
+                if (leftWidth < 30 || leftWidth > 70) return;
+                
+                leftPanel.style.width = `${leftWidth}%`;
+                rightPanel.style.width = `${100 - leftWidth}%`;
+                outerDivider.style.left = `${leftWidth}%`;
+            }
+
+            if (isDraggingInner) {
+                const offsetY = e.clientY; /* 当前鼠标Y轴坐标 */
+                const leftPanelRect = leftPanel.getBoundingClientRect();
+                const containerHeight = leftPanelRect.height; /* 左侧高度 */
+                const topHeight = ((offsetY - leftPanelRect.top) / containerHeight) * 100; /* 计算顶部占比 */
+                
+                // 设置最小高度限制
+                if (topHeight < 30 || topHeight > 80) return;
+                
+                topPart.style.height = `${topHeight}%`;
+                bottomPart.style.height = `${100 - topHeight}%`;
+                innerDivider.style.top = `${topHeight}%`;
+            }
         });
 
         // 内部分割线拖动逻辑
@@ -242,23 +767,15 @@
         const bottomPart = document.querySelector(".bottom-part");
         let isDraggingInner = false;
 
-        innerDivider.addEventListener("mousedown", function() {
+        innerDivider.addEventListener("mousedown", function(e) {
             isDraggingInner = true;
+            document.body.style.cursor = "ns-resize";
+            e.stopPropagation(); // 防止事件冒泡到外层
         });
 
-        document.addEventListener("mouseup", function() {
-            isDraggingInner = false;
-        });
-
-        document.addEventListener("mousemove", function(e) {
-            if (!isDraggingInner) return;
-
-            const offsetY = e.clientY; /* 当前鼠标Y轴坐标 */
-            const containerHeight = document.querySelector(".left-panel").offsetHeight; /* 左侧高度 */
-            const topHeight = (offsetY / containerHeight) * 100; /* 计算顶部占比 */
-            topPart.style.height = `${topHeight}%`;
-            bottomPart.style.height = `${100 - topHeight}%`;
-            innerDivider.style.top = `${topHeight}%`;
+        // 窗口调整大小时重新计算编辑器大小
+        window.addEventListener('resize', function() {
+            editor.resize();
         });
     </script>
 </body>
