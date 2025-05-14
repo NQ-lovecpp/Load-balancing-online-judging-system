@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OJ系统性能测试</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .chart-container {
+            height: 400px;
+            margin-top: 20px;
+        }
+        #log {
+            height: 200px;
+            overflow-y: auto;
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>OJ系统性能测试工具</h1>
+    
+    <div class="container">
+        <div class="card">
+            <h2>测试配置</h2>
+            <div class="form-group">
+                <label for="concurrent">并发用户数</label>
+                <input type="number" id="concurrent" value="10" min="1" max="1000">
+            </div>
+            <div class="form-group">
+                <label for="requests">总请求数</label>
+                <input type="number" id="requests" value="100" min="1" max="10000">
+            </div>
+            <div class="form-group">
+                <label for="code">测试代码 (C++)</label>
+                <textarea id="code" rows="10">#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <unordered_map>
+
+using namespace std;
+
+class Solution 
+{
+public:
+    vector<int> twoSum(vector<int>& nums, int target) 
+    {
+        // 哈希表可以很快的知道：
+        // 1. 有没有存（key）
+        // 2. 存了多少（value）
+        unordered_map<int, int> HashTable; // <nums[i], i>
+        for(int i = 0; i < nums.size(); i++)
+        {
+            if(HashTable.count(target - nums[i]) != 0)
+            {
+                return {HashTable[target - nums[i]], i};
+            }
+            HashTable[nums[i]] = i; 
+        }
+        return {-1, -1};
+    }
+};</textarea>
+            </div>
+            <button id="startTest">开始测试</button>
+            <button id="stopTest" disabled>停止测试</button>
+        </div>
+        
+        <div class="card">
+            <h2>测试日志</h2>
+            <div id="log"></div>
+        </div>
+        
+        <div class="card results">
+            <h2>测试结果</h2>
+            <div>
+                <p><strong>QPS(每秒查询数):</strong> <span id="qps">-</span></p>
+                <p><strong>平均响应时间:</strong> <span id="avgResponseTime">-</span> ms</p>
+                <p><strong>最小响应时间:</strong> <span id="minResponseTime">-</span> ms</p>
+                <p><strong>最大响应时间:</strong> <span id="maxResponseTime">-</span> ms</p>
+                <p><strong>成功率:</strong> <span id="successRate">-</span>%</p>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="responseTimeChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="qpsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isRunning = false;
+        let testResults = {
+            responseTimes: [],
+            qpsSamples: [],
+            successCount: 0,
+            failCount: 0,
+            startTime: null,
+            endTime: null
+        };
+        let charts = {
+            responseTime: null,
+            qps: null
+        };
+        let stopRequested = false;
+
+        document.getElementById('startTest').addEventListener('click', startTest);
+        document.getElementById('stopTest').addEventListener('click', stopTest);
+
+        function startTest() {
+            if (isRunning) return;
+            
+            // 重置测试结果
+            testResults = {
+                responseTimes: [],
+                qpsSamples: [],
+                successCount: 0,
+                failCount: 0,
+                startTime: new Date(),
+                endTime: null
+            };
+            
+            // 更新UI状态
+            isRunning = true;
+            stopRequested = false;
+            document.getElementById('startTest').disabled = true;
+            document.getElementById('stopTest').disabled = false;
+            document.getElementById('log').innerHTML = '';
+            
+            ['qps', 'avgResponseTime', 'minResponseTime', 'maxResponseTime', 'successRate'].forEach(id => {
+                document.getElementById(id).textContent = '-';
+            });
+            
+            // 获取测试参数
+            const concurrent = parseInt(document.getElementById('concurrent').value);
+            const totalRequests = parseInt(document.getElementById('requests').value);
+            const code = document.getElementById('code').value;
+            
+            logMessage(`开始测试: ${concurrent}个并发用户, ${totalRequests}个请求`);
+            
+            // 初始化图表
+            initCharts();
+            
+            // 开始测试
+            runLoadTest(concurrent, totalRequests, code);
+        }
+        
+        function stopTest() {
+            stopRequested = true;
+            logMessage('正在停止测试...');
+            document.getElementById('stopTest').disabled = true;
+        }
+        
+        async function runLoadTest(concurrent, totalRequests, code) {
+            const requestsPerUser = Math.ceil(totalRequests / concurrent);
+            const startTime = new Date();
+            let completedRequests = 0;
+            
+            // 创建并发用户
+            const users = [];
+            for (let i = 0; i < concurrent; i++) {
+                users.push(runUser(i, requestsPerUser, code));
+            }
+            
+            // 等待所有用户完成
+            await Promise.all(users);
+            
+            // 更新测试结束时间
+            testResults.endTime = new Date();
+            
+            // 计算结果
+            calculateResults();
+            
+            // 重置UI状态
+            isRunning = false;
+            document.getElementById('startTest').disabled = false;
+            document.getElementById('stopTest').disabled = true;
+            logMessage('测试完成');
+            
+            async function runUser(userId, requestCount, code) {
+                for (let i = 0; i < requestCount; i++) {
+                    if (stopRequested || completedRequests >= totalRequests) break;
+                    
+                    const startRequestTime = new Date();
+                    try {
+                        const result = await sendCompileRequest(code);
+                        
+                        const responseTime = new Date() - startRequestTime;
+                        testResults.responseTimes.push(responseTime);
+                        
+                        // 判断OJ系统返回的结果是否成功
+                        // 根据OJ_Controller.hpp，status=0表示成功
+                        if (result.status === 0 || result.status === "0") {
+                            testResults.successCount++;
+                        } else {
+                            testResults.failCount++;
+                            if (userId === 0 && i % 10 === 0) {
+                                logMessage(`请求失败，状态码: ${result.status}, 原因: ${result.reason || '未知'}`);
+                            }
+                        }
+                        
+                        // 更新QPS样本
+                        const elapsedSeconds = (new Date() - startTime) / 1000;
+                        const currentQps = (testResults.successCount + testResults.failCount) / elapsedSeconds;
+                        testResults.qpsSamples.push({
+                            time: elapsedSeconds,
+                            qps: currentQps
+                        });
+                        
+                        // 实时更新图表
+                        updateCharts();
+                        
+                        if (userId === 0 && i % 10 === 0) {
+                            logMessage(`已完成 ${testResults.successCount + testResults.failCount} 个请求, 当前QPS: ${currentQps.toFixed(2)}`);
+                        }
+                    } catch (error) {
+                        testResults.failCount++;
+                        logMessage(`请求失败: ${error.message}`);
+                    }
+                    
+                    completedRequests++;
+                    
+                    // 随机延迟，模拟真实用户行为
+                    await new Promise(resolve => setTimeout(resolve, Math.random() * 100));
+                }
+            }
+        }
+        
+        async function sendCompileRequest(code) {
+            // 使用题目1作为性能测试题目
+            const judge_url = "/judge/1";
+            
+            const response = await fetch(judge_url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8'
+                },
+                body: JSON.stringify({
+                    'code': code,
+                    'input': ''
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP错误: ${response.status}`);
+            }
+            
+            return await response.json();
+        }
+        
+        function calculateResults() {
+            if (testResults.responseTimes.length === 0) return;
+            
+            const totalTime = (testResults.endTime - testResults.startTime) / 1000; // 以秒为单位
+            const qps = testResults.successCount / totalTime;
+            
+            const avgResponseTime = testResults.responseTimes.reduce((sum, time) => sum + time, 0) / testResults.responseTimes.length;
+            const minResponseTime = Math.min(...testResults.responseTimes);
+            const maxResponseTime = Math.max(...testResults.responseTimes);
+            const successRate = (testResults.successCount / (testResults.successCount + testResults.failCount)) * 100;
+            
+            document.getElementById('qps').textContent = qps.toFixed(2);
+            document.getElementById('avgResponseTime').textContent = avgResponseTime.toFixed(2);
+            document.getElementById('minResponseTime').textContent = minResponseTime.toFixed(2);
+            document.getElementById('maxResponseTime').textContent = maxResponseTime.toFixed(2);
+            document.getElementById('successRate').textContent = successRate.toFixed(2);
+        }
+        
+        function initCharts() {
+            // 响应时间分布图表
+            const rtCtx = document.getElementById('responseTimeChart').getContext('2d');
+            if (charts.responseTime) charts.responseTime.destroy();
+            charts.responseTime = new Chart(rtCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '响应时间 (ms)',
+                        data: [],
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '响应时间 (ms)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '请求序号'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // QPS图表
+            const qpsCtx = document.getElementById('qpsChart').getContext('2d');
+            if (charts.qps) charts.qps.destroy();
+            charts.qps = new Chart(qpsCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'QPS (每秒查询数)',
+                        data: [],
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'QPS'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '时间 (秒)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateCharts() {
+            // 更新响应时间图表 (最多显示100个点，避免图表过于密集)
+            const sampleSize = Math.min(100, testResults.responseTimes.length);
+            const step = Math.ceil(testResults.responseTimes.length / sampleSize);
+            
+            const sampledResponseTimes = [];
+            const labels = [];
+            
+            for (let i = 0; i < testResults.responseTimes.length; i += step) {
+                sampledResponseTimes.push(testResults.responseTimes[i]);
+                labels.push(i + 1);
+            }
+            
+            charts.responseTime.data.labels = labels;
+            charts.responseTime.data.datasets[0].data = sampledResponseTimes;
+            charts.responseTime.update();
+            
+            // 更新QPS图表
+            charts.qps.data.labels = testResults.qpsSamples.map(sample => sample.time.toFixed(1));
+            charts.qps.data.datasets[0].data = testResults.qpsSamples.map(sample => sample.qps);
+            charts.qps.update();
+        }
+        
+        function logMessage(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}<br>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+    </script>
+</body>
+</html> 

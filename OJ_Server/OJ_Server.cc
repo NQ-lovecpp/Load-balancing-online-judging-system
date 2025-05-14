@@ -98,15 +98,7 @@ int main()
     });
 
 
-    // 新增网页推送的路由
-    svr.Get("/webcam_inference", [&ctrl](const Request &request, Response &response)
-    {
-        // HTML内容
-        std::string html_content;
-        ctrl.GetInferPage(&html_content);
-        response.set_content(html_content, "text/html; charset=utf-8");
-    });
-
+    LOG(INFO) << "listening on 13000" << std::endl;
 
     svr.set_base_dir("./wwwroot");
     svr.listen("0.0.0.0", 8888);

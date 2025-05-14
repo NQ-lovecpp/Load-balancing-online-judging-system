@@ -18,6 +18,9 @@
 
 #include <jsoncpp/json/json.h>
 
+// 定义DOCKER_LOAD_BALANCE宏来启用Docker内置的负载均衡
+#define DOCKER_LOAD_BALANCE
+
 namespace ns_controller
 {
     using namespace std;
@@ -83,6 +86,7 @@ namespace ns_controller
         }
     };
 
+#ifndef DOCKER_LOAD_BALANCE
     const std::string service_machine = "./conf/service_machine.conf";
 
     // 负载均衡模块
@@ -238,6 +242,33 @@ namespace ns_controller
         }
 
     };
+#else
+    // Docker负载均衡模式下的简化版LoadBalancingModule
+    class LoadBalancingModule
+    {
+    public:
+        LoadBalancingModule() 
+        {
+            LOG(INFO) << "使用Docker容器负载均衡模式，通过单一服务名访问编译服务" << "\n";
+        }
+        ~LoadBalancingModule() {}
+
+        // 在Docker负载均衡模式下，使用单一服务名
+        void GetDockerServiceAddress(std::string *ip, int *port)
+        {
+            // 使用Docker Compose中定义的服务名称
+            *ip = "117.72.15.209";
+            *port = 8081;
+            
+            LOG(INFO) << "使用编译服务: " << *ip << ":" << *port << "\n";
+        }
+
+        // 以下方法在Docker模式下为空实现，保持API兼容性
+        void LetOnline() {}
+        void LetOffline(int id) {}
+        void ShowMachines() {}
+    };
+#endif
 
 
     // 核心业务逻辑的控制器
@@ -248,145 +279,165 @@ namespace ns_controller
         View _view;                         // 提供html渲染功能
         LoadBalancingModule _load_balancer; // 核心负载均衡器
     public:
-
-        // 恢复后端编译服务，
+        // 让所有主机上线的恢复接口
         void RestoreService()
         {
             _load_balancer.LetOnline();
+            _load_balancer.ShowMachines();
         }
 
-
-        // 推理服务的网页
+        // 获取推理页面
         bool GetInferPage(std::string *html)
         {
-            bool ret = true;
-            std::string src_html = "./template_html/webcam_inference.html";
-
-            // 2. 形成字典
-            ctemplate::TemplateDictionary root("all_questions");
-
-            // 3. 获取被渲染的html
-            ctemplate::Template *tpl = ctemplate::Template::GetTemplate(src_html, ctemplate::DO_NOT_STRIP);
-            
-            // 4. 开始渲染
-            tpl->Expand(html, &root);
-            
-            return ret;
+            return _view.GetInferPage(html);
         }
 
-        
-        /// @brief 根据题目数据构建网页
-        /// @param html 输出型参数，html内容的字符串
-        /// @return 是否成功
+        // 获取整个题库的所有题目
         bool AllQuestions(std::string *html)
         {
-            bool ret = true;
+            // 1. 调用model，获取所有题目信息
             vector<struct Question> all;
             if(_model.GetAllQuestions(&all))
             {
+                // 题目按照难度进行排序
                 std::sort(all.begin(), all.end(), [](const struct Question &q1, const struct Question &q2){
                     return stoi(q1.number) < stoi(q2.number);
                 });
-                // 获取题目成功，将所有题目构建成网页
-                _view.AllExpandToHtml(all, html);
+
+                // 2. 调用view，获取题目列表页面
+                _view.AllExpandHtml(all, html);
+                return true;
             }
-            else
-            {
-                *html = "获取题目失败，形成题目列表失败";
-                ret = false;
-            }
-            return ret;
-        }        
-        
+
+            *html = "获取题目失败！请检查文件路径";
+            return false;
+        }
+
+        // 获取单个题目信息
         bool Question(const std::string &number, std::string *html)
         {
-            bool ret = true;
+            // 1. 调用model，获取指定题目信息
             struct Question q;
             if(_model.GetOneQuestion(number, &q))
             {
-                // 获取指定题目信息成功，将所有的题目数据建成网页
-                _view.OneExpandToHtml(q, html);
+                // 2. 调用view，获取单个题目详情页面
+                _view.OneExpandHtml(q, html);
+                return true;
             }
-            else
-            {
-                *html = "指定题目：" + number + " 未能加载！";   
-                ret = false;             
-            }
-            return ret;
+
+            *html = "指定题目：" + number + " 不存在";
+            return false;
         }
 
-        /// @brief 判题的接口，它会调用编译服务集群
-        /// @param number 题目编号
-        /// @param in_json 请求
-        /// @param out_json 结果
+        // 判题
         void Judge(const std::string &number, const std::string in_json, std::string *out_json)
         {
-            // LOG(Debug) << "传入的json串：\n" << in_json << "\n题号：" << number << "\n";
-            
-            // 0. 根据题目编号，拿到题目细节
+            // 1. 根据题目编号，直接拿到测试用例代码
             struct Question q;
             _model.GetOneQuestion(number, &q);
 
-            // 1. in_json进行反序列化，得到题目的id，得到用户提交源代码
-            Json::Reader reader;
+            // 2. 将用户提交的代码和测试用例代码进行合并
             Json::Value in_value;
+            Json::Reader reader;
             reader.parse(in_json, in_value);
-            std::string customer_code = in_value["code"].asString();
 
-            // 2. 重新拼接 用户代码+测试用例代码 拼成一份新的代码
-            Json::Value compile_value;
-            compile_value["input"] = in_value["input"].asString();
-            compile_value["code"] = customer_code + "\n" + q.test_cases; // 加一个换行符，以免两段代码粘在一起
-            compile_value["cpu_value"] = q.cpu_limit;
-            compile_value["mem_limit"] = q.mem_limit;
+            std::string user_code = in_value["code"].asString();
+
+            // 构造后台编译服务所需的json串
+            Json::Value compile_request;
+            compile_request["code"] = user_code + q.test_cases;
+            compile_request["input"] = in_value["input"].asString(); // 输入用例
+            compile_request["cpu_limit"] = q.cpu_limit;
+            compile_request["mem_limit"] = q.mem_limit;
+
             Json::FastWriter writer;
-            std::string compile_string = writer.write(compile_value);
+            std::string compile_string = writer.write(compile_request);
 
-            // 3. 选择负载最低的主机
-            // 规则：一直选择，直到主机可用，否则就是所有compile_server都挂了
+#ifndef DOCKER_LOAD_BALANCE
+            // 3. 选择负载最低的主机，发起http请求，得到结果
+            //    (1) 可能会因为主机挂掉导致请求失败，重新选择主机
+            //    (2) 也可能所有主机都已经离线
             while(true)
             {
-                int id = 0;
+                int id = 0; // 主机ID
                 Machine *m = nullptr;
-                if(_load_balancer.SmartChoice(&id, &m) == false)
+                if(!_load_balancer.SmartChoice(&id, &m))
                 {
-                    break;
+                    // 所有主机都离线了
+                    Json::Value resp_json;
+                    resp_json["status"] = -1;
+                    resp_json["reason"] = "所有主机都挂掉了，请等待恢复！";
+                    resp_json["stdout"] = "";
+                    resp_json["stderr"] = "";
+                    
+                    *out_json = writer.write(resp_json);
+                    LOG(Fatal) << "后端编译主机全部挂掉，请运维同学尽快查看！" << "\n";
+                    return;
                 }
 
-                // 4. 发起http请求，得到结果
                 Client cli(m->ip, m->port);
-                m->IncreaseLoad(); 
-                LOG(Info) << "选择主机成功，主机id：" << id
-                          << "，地址端口号：" << m->ip << ":" << m->port 
-                          << " ，当前负载：" << m->load
-                          << "\n";
+                m->IncreaseLoad();
+                LOG(INFO) << "选择主机成功，主机id: " << id << "，主机ip：" << m->ip << "端口: " << m->port << "\n";
 
-                _load_balancer.ShowMachines();  // 仅仅是为了用来调试
-
-                if(auto res = cli.Post("/compile_and_run", compile_string, "application/json; charset=utf-8"))
+                if (auto res = cli.Post("/compile_and_run", compile_string, "application/json;charset=utf-8")) 
                 {
-                    // 5. 如果成功，将结果赋值给out_json
-                    if(res->status == 200)
+                    // 正常交互完成
+                    if (res->status == 200) 
                     {
+                        // 4. 将结果返回，前端网页要显示结果
                         *out_json = res->body;
                         m->DecreaseLoad();
-                        LOG(Info) << "请求编译和运行服务成功..." << "\n";
-                        break;
+                        return;
                     }
                     m->DecreaseLoad();
-                }
-                else
+                    LOG(Error) << "请求" << m->ip << ":" << m->port << "失败，尝试请求其他主机" << "\n";
+                } 
+                else 
                 {
-                    // 请求失败
-                    LOG(Error) << "当前请求的主机id：" << id
-                               << " 详情：" << m->ip << ":" << m->port << " 可能已经离线..." << "\n";
-                    // m->DecreaseLoad();
+                    // 请求主机失败，不能够和主机建立正常连接，主机可能已经挂掉了
+                    // 降低当前编译主机的优先级
+                    LOG(Warning) << "当前请求的主机可能已经挂掉了, id: " << id << " ip: " << m->ip << " port: " << m->port << "\n";
+                    m->ResetLoad();
                     _load_balancer.LetOffline(id);
-                    _load_balancer.ShowMachines();  // 仅仅是为了用来调试
+                    _load_balancer.ShowMachines();
+                    // 选择新的主机重新尝试
                 }
-
             }
+#else
+            // Docker负载均衡模式下，直接按照http路径请求
+            std::string service_ip;
+            int service_port;
+            _load_balancer.GetDockerServiceAddress(&service_ip, &service_port);
+            
+            Client cli(service_ip, service_port);
+            LOG(INFO) << "使用Docker服务: " << service_ip << ":" << service_port << "\n";
 
+            if (auto res = cli.Post("/compile_and_run", compile_string, "application/json;charset=utf-8")) 
+            {
+                // 正常交互完成
+                if (res->status == 200) 
+                {
+                    // 将结果返回，前端网页要显示结果
+                    *out_json = res->body;
+                    return;
+                }
+                LOG(Error) << "请求" << service_ip << ":" << service_port << "失败，HTTP状态码: " << res->status << "\n";
+            } 
+            else 
+            {
+                // 请求失败，尝试使用下一个编译服务
+                LOG(Warning) << "请求Docker服务失败: " << service_ip << ":" << service_port << "\n";
+                
+                // 构造错误响应
+                Json::Value resp_json;
+                resp_json["status"] = -1;
+                resp_json["reason"] = "编译服务请求失败，请稍后重试！";
+                resp_json["stdout"] = "";
+                resp_json["stderr"] = "";
+                
+                *out_json = writer.write(resp_json);
+            }
+#endif
         }
 
         Controller() {}

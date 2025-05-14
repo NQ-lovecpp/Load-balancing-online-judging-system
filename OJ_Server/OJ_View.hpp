@@ -4,7 +4,7 @@
 #include <string>
 #include <ctemplate/template.h>
 
-#define MySQL
+#include "../Common/Utility.hpp"
 #include "OJ_Model.hpp"
 
         // struct Question
@@ -22,6 +22,7 @@
 namespace ns_view
 {
     using namespace ns_model;
+    using namespace ns_utility;
 
     const std::string template_path = "./template_html/";
     class View
@@ -33,7 +34,7 @@ namespace ns_view
         /// @brief 将所有题目信息的数组，加载到html字符串中
         /// @param questions 输入一个包含所有题目信息的数组
         /// @param html 输出一个题目列表网页的html字符串
-        void AllExpandToHtml(const std::vector<struct Question> &questions, std::string *html)
+        void AllExpandHtml(const std::vector<struct Question> &questions, std::string *html)
         {
             // 题目的编号 题目的标题 题目的难度
             // 1. 形成路径
@@ -59,7 +60,7 @@ namespace ns_view
         /// @brief 将一个题目生成对应题目网页的html字符串
         /// @param q 输入一个题目对象
         /// @param html 输出一个题目页面的html字符串
-        void OneExpandToHtml(const struct Question &q, std::string *html)
+        void OneExpandHtml(const struct Question &q, std::string *html)
         {
             // 1. 形成路径
             std::string src_html = template_path + "one_question.html";
@@ -70,7 +71,7 @@ namespace ns_view
             root.SetValue("title", q.title);
             root.SetValue("star", q.star);
             root.SetValue("description", q.description);
-            // 改正编辑器内不能正确渲染“<  >”的bug
+            // 改正编辑器内不能正确渲染"<  >"的bug
             std::string modefied_defautlt_code = StringUtility::EscapeHtml(q.default_code);
             root.SetValue("pre_code", modefied_defautlt_code);
 
@@ -79,6 +80,25 @@ namespace ns_view
             
             // 4. 开始渲染
             tpl->Expand(html, &root); 
+        }
+
+        /// @brief 生成推理页面HTML
+        /// @param html 输出的HTML字符串
+        /// @return 是否成功
+        bool GetInferPage(std::string *html)
+        {
+            std::string src_html = template_path + "webcam_inference.html";
+
+            // 2. 形成字典
+            ctemplate::TemplateDictionary root("all_questions");
+
+            // 3. 获取被渲染的html
+            ctemplate::Template *tpl = ctemplate::Template::GetTemplate(src_html, ctemplate::DO_NOT_STRIP);
+            
+            // 4. 开始渲染
+            tpl->Expand(html, &root);
+            
+            return true;
         }
 
         View() {}

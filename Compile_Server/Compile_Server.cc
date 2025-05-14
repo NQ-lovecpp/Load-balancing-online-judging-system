@@ -2,7 +2,7 @@
 #include "../Common/httplib.h"
 #include "../Common/Daemon.hpp"
 
-#define DEAMON_ON
+// #define DEAMON_ON
 
 using namespace ns_compile_and_run;
 using namespace httplib;
@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
         }
     });
 
-    std::cout << "listen..." << std::endl;
+    std::cout << "listening on " << argv[1] << std::endl;
     // svr.set_base_dir("./wwwroot");
     svr.listen("0.0.0.0", atoi(argv[1]));
 
