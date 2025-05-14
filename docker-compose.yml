@@ -3,31 +3,28 @@ version: '3'
 services:
   nginx:
     image: nginx:latest
+    container_name: nginx-lb
     ports:
       - "13000:80"
       - "8081:8081"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/html:/usr/share/nginx/html
-    depends_on:
-      - compile_server
     networks:
       - oj_network
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
   oj_server:
     build:
       context: ./OJ_Server
       dockerfile: Dockerfile
+    depends_on:
+      - nginx
     expose:
       - "8888"
     networks:
       - oj_network
     deploy:
       replicas: 2
-    extra_hosts:
-      - "117.72.15.209:host-gateway"
 
   compile_server:
     build:

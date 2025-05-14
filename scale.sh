@@ -66,15 +66,4 @@ fi
 echo "重新加载Nginx配置..."
 docker-compose exec nginx nginx -s reload
 
-# 为了确保localhost:8081可以被OJ服务器访问到
-if [ "$SERVICE_NAME" == "compile_server" ]; then
-    echo "更新本地主机hosts文件，确保OJ服务器可以通过117.72.15.209:8081访问编译服务..."
-    PUBLIC_IP=$(curl -s ifconfig.me)
-    
-    # 使用Docker命令在每个OJ服务器容器中添加hosts条目
-    for i in $(seq 1 $(docker-compose ps -q oj_server | wc -l)); do
-        docker exec ${PREFIX}-oj_server-${i} bash -c "echo \"$PUBLIC_IP 117.72.15.209\" >> /etc/hosts"
-    done
-fi
-
 echo "完成! $SERVICE_NAME 已扩展到 $INSTANCES 个实例" 
